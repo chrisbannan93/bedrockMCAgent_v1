@@ -752,7 +752,7 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
     if kb_id_override:
         resolved_kb_id = kb_id_override
     else:
-        if use_kb is None or _truthy(use_kb):
+        if _truthy(use_kb):
             resolved_kb_id = (os.getenv("EMAIL_STYLE_KB_ID") or "").strip()
         else:
             resolved_kb_id = ""
@@ -845,6 +845,16 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
             "warnings": rag_warnings + writer_warnings + extra,
         }
 
+    asset_name = (req.get("assetName") or req.get("name") or "").strip()
+    folder_path = (req.get("folderPath") or "").strip()
+    asset_type_name = (req.get("assetTypeName") or "htmlemail").strip() or "htmlemail"
+    text_content = (out.get("textContent") or out.get("text") or "").strip()
+
+    if not asset_name:
+        extra.append("No assetName provided; emailBlueprint.name left empty.")
+    if not folder_path:
+        extra.append("No folderPath provided; emailBlueprint.folderPath left empty.")
+
     return 200, {
         "brand": "Dodo",
         "subject": subject,
@@ -854,6 +864,19 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
         "ragUsed": bool(rag_sources),
         "ragSources": rag_sources,
         "warnings": rag_warnings + writer_warnings + extra,
+        "emailBlueprint": {
+            "name": asset_name,
+            "folderPath": folder_path,
+            "assetTypeName": asset_type_name,
+            "subject": subject,
+            "preheader": preheader or "",
+            "htmlContent": html_plain,
+            "htmlContentB64": html_b64,
+            **({"textContent": text_content} if text_content else {}),
+            "ragUsed": bool(rag_sources),
+            "ragSources": rag_sources,
+            "warnings": rag_warnings + writer_warnings + extra,
+        },
     }
 
 

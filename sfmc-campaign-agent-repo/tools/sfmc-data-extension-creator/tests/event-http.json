@@ -1,7 +1,5 @@
 {
+  "path": "/createDataExtension",
   "httpMethod": "POST",
-  "path": "/__REPLACE_ME_API_PATH__",
-  "headers": { "Content-Type": "application/json" },
-  "isBase64Encoded": false,
-  "body": "{\"__REPLACE_ME_KEY__\":\"__REPLACE_ME_VALUE__\"}"
+  "body": "{\"name\":\"AI_Test_DE_01\",\"customerKey\":\"AI_Test_DE_01\",\"folderPath\":\"Generate_Via_AI_Agent/DataExtensions/AgentTests\",\"allowCreateMissingFolders\":true,\"dryRun\":true,\"fields\":[{\"name\":\"SubscriberKey\",\"type\":\"Text\",\"maxLength\":50,\"isPrimaryKey\":true},{\"name\":\"EmailAddress\",\"type\":\"EmailAddress\"},{\"name\":\"CreatedAt\",\"type\":\"Date\"}]}"
 }

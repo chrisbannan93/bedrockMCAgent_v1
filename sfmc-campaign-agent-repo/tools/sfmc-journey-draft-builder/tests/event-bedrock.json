@@ -1,13 +1,38 @@
 {
   "messageVersion": "1.0",
-  "actionGroup": "__REPLACE_ME_ACTION_GROUP__",
-  "apiPath": "/__REPLACE_ME_API_PATH__",
-  "httpMethod": "POST",
-  "requestBody": {
-    "content": {
-      "application/json": {
-        "body": {
-          "__REPLACE_ME_KEY__": "__REPLACE_ME_VALUE__"
+  "actionGroup": "sfmc-journey-draft-builder",
+  "actionGroupInvocationInput": {
+    "actionGroupName": "sfmc-journey-draft-builder",
+    "apiPath": "/journeydraft",
+    "verb": "POST",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "body": {
+            "createInSfmc": false,
+            "dryRun": true,
+            "journeySpec": {
+              "key": "00000000-0000-0000-0000-000000000001",
+              "name": "Agent Test Journey 01",
+              "workflowApiVersion": 1,
+              "triggers": [
+                {
+                  "type": "Event",
+                  "key": "TRIGGER_1",
+                  "name": "Data Extension Entry",
+                  "arguments": {}
+                }
+              ],
+              "activities": [
+                {
+                  "type": "WAIT",
+                  "name": "Wait 1 day",
+                  "key": "WAIT_1",
+                  "arguments": { "waitDuration": 1, "waitUnit": "DAYS" }
+                }
+              ]
+            }
+          }
         }
       }
     }
