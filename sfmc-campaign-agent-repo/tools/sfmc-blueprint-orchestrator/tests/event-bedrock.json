@@ -1,0 +1,19 @@
+{
+  "messageVersion": "1.0",
+  "actionGroup": "sfmc-blueprint-orchestrator",
+  "actionGroupInvocationInput": {
+    "actionGroupName": "sfmc-blueprint-orchestrator",
+    "apiPath": "/generateBlueprint",
+    "verb": "POST",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "body": {
+            "campaignName": "Test Campaign",
+            "brief": "Goal: reduce churn. Channel: email. Audience: customers with contract expiring in 14 days. Offer: $10 discount for 6 months. Timing: send once."
+          }
+        }
+      }
+    }
+  }
+}

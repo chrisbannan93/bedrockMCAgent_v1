@@ -1,0 +1,13 @@
+{
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "properties": [
+          { "name": "categoryId", "type": "integer", "value": "123456" },
+          { "name": "limitRootCategoryId", "type": "integer", "value": "789000" },
+          { "name": "maxDepth", "type": "integer", "value": "50" }
+        ]
+      }
+    }
+  }
+}

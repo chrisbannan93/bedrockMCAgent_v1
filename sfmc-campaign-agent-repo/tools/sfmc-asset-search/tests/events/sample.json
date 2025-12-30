@@ -1,0 +1,5 @@
+{
+  "path": "/searchAssets",
+  "httpMethod": "POST",
+  "body": "{\"queryText\":\"Activation\",\"nameOperator\":\"contains\"}"
+}

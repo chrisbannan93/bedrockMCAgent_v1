@@ -1,0 +1,22 @@
+{
+  "messageVersion": "1.0",
+  "actionGroup": "sfmc-automation-inspector",
+  "actionGroupInvocationInput": {
+    "actionGroupName": "sfmc-automation-inspector",
+    "apiPath": "/searchAutomations",
+    "verb": "POST",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "body": {
+            "queryText": "welcome",
+            "nameOperator": "contains",
+            "page": 1,
+            "pageSize": 10,
+            "includeRaw": false
+          }
+        }
+      }
+    }
+  }
+}

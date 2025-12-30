@@ -1,0 +1,5 @@
+{
+  "categoryId": 123456,
+  "limitRootCategoryId": 789000,
+  "maxDepth": 50
+}

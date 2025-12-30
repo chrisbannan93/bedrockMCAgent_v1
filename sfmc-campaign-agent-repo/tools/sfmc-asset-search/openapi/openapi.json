@@ -1,0 +1,135 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SFMC Asset Search Tool",
+    "version": "1.0.0",
+    "description": "Search SFMC Content Builder assets by name/keywords, folder (category), and asset type."
+  },
+  "paths": {
+    "/searchAssets": {
+      "post": {
+        "operationId": "searchAssets",
+        "description": "Search Content Builder assets. You can pass either folderPath or categoryId to scope the search.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "queryText": {
+                    "type": "string",
+                    "description": "Text to match against asset name (e.g. 'Activation')."
+                  },
+                  "nameOperator": {
+                    "type": "string",
+                    "description": "How to match queryText against the asset name.",
+                    "enum": ["like", "equal", "mustContain"],
+                    "default": "like"
+                  },
+                  "folderPath": {
+                    "type": "string",
+                    "description": "Optional folder path like 'Journeys/NBN/Activation'. If provided, Lambda will resolve it (read-only) to a categoryId."
+                  },
+                  "categoryId": {
+                    "description": "Optional category id to scope the search. Overrides folderPath if both are provided.",
+                    "oneOf": [
+                      { "type": "integer" },
+                      { "type": "string" }
+                    ]
+                  },
+                  "assetTypeIds": {
+                    "description": "Optional list of asset type IDs to filter by (e.g. [207,208]).",
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": { "type": "integer" }
+                      },
+                      {
+                        "type": "string",
+                        "description": "Comma-separated IDs like '207,208'."
+                      }
+                    ]
+                  },
+                  "assetTypeNames": {
+                    "description": "Optional list of asset type names to filter by (e.g. ['template','htmlblock']).",
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      },
+                      {
+                        "type": "string",
+                        "description": "Comma-separated names like 'template,htmlblock'."
+                      }
+                    ]
+                  },
+                  "page": {
+                    "type": "integer",
+                    "description": "Page number (1-based).",
+                    "default": 1
+                  },
+                  "pageSize": {
+                    "type": "integer",
+                    "description": "Number of results per page (max 100).",
+                    "default": 25
+                  },
+                  "fields": {
+                    "type": "array",
+                    "description": "Fields to return per asset (optional).",
+                    "items": { "type": "string" }
+                  },
+                  "sortBy": {
+                    "type": "string",
+                    "description": "Sort property.",
+                    "default": "modifiedDate"
+                  },
+                  "sortDir": {
+                    "type": "string",
+                    "description": "Sort direction.",
+                    "enum": ["ASC", "DESC"],
+                    "default": "DESC"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search completed.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "404": {
+            "description": "Folder not found (when folderPath cannot be resolved).",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SFMC Email Composer (Dodo-only)",
+    "version": "1.1.0",
+    "description": "Composes Dodo SFMC sandbox email drafts (subject, preheader, HTML) using optional Bedrock KB RAG + model. Can create a draft HTML Email asset in Content Builder using categoryId (use folder-resolver tool first)."
+  },
+  "paths": {
+    "/composeEmail": {
+      "post": {
+        "operationId": "composeEmail",
+        "description": "Generate subject, preheader, and HTML for a Dodo email using optional KB RAG or provided ragContext.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ComposeEmailRequest" },
+              "examples": {
+                "base64_html": {
+                  "summary": "Compose email and return HTML as base64",
+                  "value": {
+                    "brand": "Dodo",
+                    "brief": "Remind customers their bill is due soon and how to pay online.",
+                    "ctaText": "Pay my bill",
+                    "ctaUrl": "https://www.dodo.com",
+                    "returnHtmlB64": true
+                  }
+                },
+                "normalized_brief_only": {
+                  "summary": "Compose using normalizedBrief (no brief string)",
+                  "value": {
+                    "brand": "Dodo",
+                    "normalizedBrief": { "campaignType": "Billing", "message": "Bill due reminder" },
+                    "returnHtmlB64": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email content generated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ComposeEmailResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "500": {
+            "description": "Writer output invalid or internal failure",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "502": {
+            "description": "Model invocation or upstream dependency failed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    },
+    "/createEmailAsset": {
+      "post": {
+        "operationId": "createEmailAsset",
+        "description": "Create a draft HTML Email asset in SFMC Content Builder sandbox using categoryId. Use sfmc-folder-resolver to obtain categoryId for safe folders.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateEmailAssetRequest" },
+              "examples": {
+                "create_from_b64_with_categoryId": {
+                  "summary": "Create asset using categoryId and base64 HTML",
+                  "value": {
+                    "brand": "Dodo",
+                    "name": "AGENT_TEST_Email_01",
+                    "categoryId": 123456,
+                    "subject": "Your Dodo bill is due soon",
+                    "preheader": "Pay online in minutes",
+                    "htmlContentB64": "PGh0bWw+Li4uPC9odG1sPg=="
+                  }
+                },
+                "create_with_raw_html": {
+                  "summary": "Create asset using categoryId and raw HTML",
+                  "value": {
+                    "brand": "Dodo",
+                    "name": "AGENT_TEST_Email_02",
+                    "categoryId": 123456,
+                    "subject": "Planned maintenance this weekend",
+                    "preheader": "",
+                    "htmlContent": "<html><body><div>Hi there</div><div>...</div></body></html>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset created (or handled failure)",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateEmailAssetResponse" } } }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "502": {
+            "description": "SFMC dependency failed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RagContextItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["excerpt"],
+        "properties": {
+          "sourceUri": { "type": "string", "description": "Optional identifier for the snippet source." },
+          "excerpt": { "type": "string", "description": "The style snippet text to apply." }
+        }
+      },
+      "RagSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sourceUri": { "type": "string" },
+          "score": { "type": "number" },
+          "excerpt": { "type": "string" }
+        }
+      },
+      "ComposeEmailRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["brand"],
+        "anyOf": [
+          { "required": ["brief"] },
+          { "required": ["normalizedBrief"] }
+        ],
+        "properties": {
+          "brand": { "type": "string", "description": "Must be Dodo (case-insensitive supported).", "default": "Dodo" },
+          "brief": { "type": "string", "description": "Campaign brief / request text." },
+          "normalizedBrief": { "type": "object", "description": "Normalized brief object (alternative to brief)." },
+          "tone": { "type": "string" },
+          "cta": { "type": "string", "description": "Alias for ctaText (agent-friendly)." },
+          "ctaText": { "type": "string" },
+          "ctaUrl": { "type": "string" },
+          "emailGoal": { "type": "string" },
+          "audienceSummary": { "type": "string" },
+          "requiredLinks": { "type": "array", "items": { "type": "string" } },
+          "useKnowledgeBase": { "type": "boolean", "description": "If false, skips KB retrieval entirely." },
+          "kbId": { "type": "string", "description": "Knowledge Base ID override." },
+          "ragContext": {
+            "type": "array",
+            "description": "Optional pre-retrieved style snippets. If provided, used instead of KB retrieve. Do not include reflection/metadata/XML.",
+            "items": { "oneOf": [{ "type": "string" }, { "$ref": "#/components/schemas/RagContextItem" }] }
+          },
+          "ragResults": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5 },
+          "modelId": { "type": "string", "description": "Optional Bedrock modelId override." },
+          "maxTokens": { "type": "integer", "minimum": 200, "maximum": 4000, "default": 1800 },
+          "temperature": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.4 },
+          "returnHtmlB64": { "type": "boolean", "default": false },
+          "personalizationTokens": { "type": "array", "items": { "type": "string" } },
+          "requiredBlocks": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ComposeEmailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["brand", "subject", "preheader", "html", "htmlIsB64", "ragUsed", "ragSources", "warnings"],
+        "properties": {
+          "brand": { "type": "string" },
+          "subject": { "type": "string" },
+          "preheader": { "type": "string" },
+          "html": { "type": "string", "description": "HTML string (or base64 if htmlIsB64=true)" },
+          "htmlIsB64": { "type": "boolean" },
+          "ragUsed": { "type": "boolean" },
+          "ragSources": { "type": "array", "items": { "$ref": "#/components/schemas/RagSource" } },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "CreateEmailAssetRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "categoryId", "subject", "preheader"],
+        "properties": {
+          "brand": { "type": "string", "default": "Dodo" },
+          "name": { "type": "string" },
+          "categoryId": { "type": "integer", "minimum": 1, "description": "SFMC category (folder) ID. Obtain via sfmc-folder-resolver." },
+          "subject": { "type": "string" },
+          "preheader": { "type": "string", "description": "Required (may be empty string)." },
+          "htmlContent": { "type": "string", "description": "Raw HTML." },
+          "htmlContentB64": { "type": "string", "description": "Base64-encoded HTML (UTF-8). If provided, takes precedence." }
+        },
+        "oneOf": [
+          { "required": ["htmlContentB64"] },
+          { "required": ["htmlContent"] }
+        ]
+      },
+      "CreateEmailAssetResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["created", "categoryId", "warnings"],
+        "properties": {
+          "created": { "type": "boolean" },
+          "categoryId": { "type": "integer" },
+          "assetId": { "type": "string", "description": "Returned for internal chaining; do not echo in chat." },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "error": { "type": "string" },
+          "errorType": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}

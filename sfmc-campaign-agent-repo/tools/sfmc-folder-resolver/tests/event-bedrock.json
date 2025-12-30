@@ -1,0 +1,15 @@
+{
+  "messageVersion": "1.0",
+  "actionGroup": "__REPLACE_ME_ACTION_GROUP__",
+  "apiPath": "/__REPLACE_ME_API_PATH__",
+  "httpMethod": "POST",
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "body": {
+          "__REPLACE_ME_KEY__": "__REPLACE_ME_VALUE__"
+        }
+      }
+    }
+  }
+}

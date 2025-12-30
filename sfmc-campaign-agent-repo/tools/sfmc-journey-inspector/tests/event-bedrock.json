@@ -1,0 +1,18 @@
+{
+  "messageVersion": "1.0",
+  "actionGroup": "sfmc-journey-inspector",
+  "apiPath": "/searchJourneys",
+  "httpMethod": "POST",
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "properties": [
+          { "name": "nameOrDescription", "type": "string", "value": "Activation" },
+          { "name": "mostRecentVersionOnly", "type": "boolean", "value": "true" },
+          { "name": "page", "type": "integer", "value": "1" },
+          { "name": "pageSize", "type": "integer", "value": "25" }
+        ]
+      }
+    }
+  }
+}

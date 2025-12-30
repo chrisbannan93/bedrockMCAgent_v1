@@ -1,0 +1,61 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SFMC Folder Resolver Tool",
+    "version": "1.0.0",
+    "description": "Resolve or create an SFMC Content Builder folder path and return the CategoryId."
+  },
+  "paths": {
+    "/resolveFolder": {
+      "post": {
+        "operationId": "resolveFolder",
+        "description": "Resolve or create a Content Builder folder path and return the CategoryId.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["folderPath"],
+                "properties": {
+                  "folderPath": {
+                    "type": "string",
+                    "description": "Folder path like 'Journeys/NBN/Activation'"
+                  },
+                  "createIfMissing": {
+                    "type": "boolean",
+                    "description": "If true, create folders that do not exist (later: real SFMC calls).",
+                    "default": false
+                  },
+                  "assetFamily": {
+                    "type": "string",
+                    "description": "SFMC category tree family. For now use 'content-builder'.",
+                    "default": "content-builder"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Folder resolved.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

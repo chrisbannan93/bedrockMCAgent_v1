@@ -1,0 +1,159 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "sfmc-data-extension-creator",
+    "version": "1.0.0",
+    "description": "Sandbox tool to validate, search, describe, and create SFMC Data Extensions (guardrailed). Creation uses SOAP CreateRequest. Default mode is dryRun unless explicitly disabled."
+  },
+  "paths": {
+    "/validateDataExtensionSpec": {
+      "post": {
+        "operationId": "validateDataExtensionSpec",
+        "description": "Validate/normalise a Data Extension spec (fields, names, folder safety). Does not call SFMC.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DataExtensionSpec" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/createDataExtension": {
+      "post": {
+        "operationId": "createDataExtension",
+        "description": "Create a Data Extension from a spec. Guardrailed. Defaults to dryRun unless dryRun=false is passed.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateDataExtensionRequest" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "409": { "description": "Already Exists" },
+          "400": { "description": "Bad Request" },
+          "502": { "description": "Upstream Error" }
+        }
+      }
+    },
+    "/describeDataExtension": {
+      "post": {
+        "operationId": "describeDataExtension",
+        "description": "Describe a Data Extension by customerKey (includes fields by default).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/DescribeDataExtensionRequest" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "404": { "description": "Not Found" },
+          "400": { "description": "Bad Request" },
+          "502": { "description": "Upstream Error" }
+        }
+      }
+    },
+    "/searchDataExtensions": {
+      "post": {
+        "operationId": "searchDataExtensions",
+        "description": "Search Data Extensions by name (contains/startsWith/equals). Results capped and paginated in-code.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/SearchRequest" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "502": { "description": "Upstream Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FieldSpec": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": {
+            "type": "string",
+            "description": "SFMC FieldType. Supported: Text, Number, Date, Boolean, Decimal, EmailAddress, Phone, Locale"
+          },
+          "maxLength": { "type": "integer", "description": "Text only" },
+          "precision": { "type": "integer", "description": "Decimal only" },
+          "scale": { "type": "integer", "description": "Decimal only" },
+          "isRequired": { "type": "boolean", "default": false },
+          "isPrimaryKey": { "type": "boolean", "default": false },
+          "defaultValue": { "type": "string" }
+        }
+      },
+      "DataExtensionSpec": {
+        "type": "object",
+        "required": ["name", "customerKey", "fields"],
+        "properties": {
+          "name": { "type": "string" },
+          "customerKey": { "type": "string" },
+          "description": { "type": "string" },
+
+          "folderId": { "type": "string", "description": "DataFolder CategoryID for Data Extension location (preferred)" },
+          "folderPath": { "type": "string", "description": "Optional. Will resolve via SOAP DataFolder traversal (guardrailed by SAFE_DATAEXT_FOLDER_ROOT)" },
+
+          "fields": { "type": "array", "items": { "$ref": "#/components/schemas/FieldSpec" } },
+
+          "isSendable": { "type": "boolean", "default": false },
+          "sendableField": { "type": "string", "description": "DE field name to map to subscriber field (e.g., SubscriberKey)" },
+          "sendableSubscriberField": { "type": "string", "description": "Subscriber field name (e.g., Subscriber Key)" },
+
+          "allowCreateMissingFolders": { "type": "boolean", "default": false },
+          "dryRun": { "type": "boolean", "default": true }
+        }
+      },
+      "CreateDataExtensionRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/DataExtensionSpec" },
+          {
+            "type": "object",
+            "properties": {
+              "includeRaw": { "type": "boolean", "default": false }
+            }
+          }
+        ]
+      },
+      "DescribeDataExtensionRequest": {
+        "type": "object",
+        "required": ["customerKey"],
+        "properties": {
+          "customerKey": { "type": "string" },
+          "includeFields": { "type": "boolean", "default": true },
+          "includeRaw": { "type": "boolean", "default": false }
+        }
+      },
+      "SearchRequest": {
+        "type": "object",
+        "required": ["queryText"],
+        "properties": {
+          "queryText": { "type": "string" },
+          "nameOperator": {
+            "type": "string",
+            "enum": ["contains", "startswith", "equals"],
+            "default": "contains"
+          },
+          "page": { "type": "integer", "default": 1 },
+          "pageSize": { "type": "integer", "default": 25 },
+          "includeRaw": { "type": "boolean", "default": false }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "AI_Agent_Test_DE",
+  "customerKey": "ai_agent_test_de_key",
+  "description": "Created by sfmc-data-extension-creator",
+  "categoryId": 12345,
+  "fields": [
+    { "name": "SubscriberKey", "fieldType": "Text", "maxLength": 254, "isRequired": true, "isPrimaryKey": true },
+    { "name": "EmailAddress", "fieldType": "EmailAddress", "maxLength": 254, "isRequired": true },
+    { "name": "CreatedAt", "fieldType": "Date", "isRequired": false }
+  ],
+  "allowExisting": true,
+  "forceTokenRefresh": true
+}

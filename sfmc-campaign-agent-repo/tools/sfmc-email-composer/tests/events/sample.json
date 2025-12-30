@@ -1,0 +1,5 @@
+{
+  "apiPath": "/health",
+  "httpMethod": "POST",
+  "body": "{}"
+}

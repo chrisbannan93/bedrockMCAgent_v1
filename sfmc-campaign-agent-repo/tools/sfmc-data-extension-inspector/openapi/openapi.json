@@ -1,0 +1,10 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "sfmc-data-extension-inspector",
+    "version": "0.0.1",
+    "description": "PLACEHOLDER: replace with real schema."
+  },
+  "paths": {},
+  "components": { "schemas": {} }
+}

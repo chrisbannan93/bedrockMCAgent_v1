@@ -1,0 +1,20 @@
+{
+  "messageVersion": "1.0",
+  "actionGroup": "sfmc-data-extension-inspector",
+  "actionGroupInvocationInput": {
+    "actionGroupName": "sfmc-data-extension-inspector",
+    "apiPath": "/inspectDataExtension",
+    "verb": "POST",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "properties": [
+            { "name": "customerKey", "type": "string", "value": "AGENT_TEST_DE_01" },
+            { "name": "includeFolderPath", "type": "boolean", "value": "true" },
+            { "name": "includeFields", "type": "boolean", "value": "true" }
+          ]
+        }
+      }
+    }
+  }
+}

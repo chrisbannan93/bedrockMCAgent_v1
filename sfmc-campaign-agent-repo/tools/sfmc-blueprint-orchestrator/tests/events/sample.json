@@ -1,0 +1,5 @@
+{
+  "rawPath": "/validateBlueprint",
+  "httpMethod": "POST",
+  "body": "{\"blueprint\":{\"schemaVersion\":\"1.0\",\"campaign\":{\"name\":\"Test\"},\"folders\":{\"root\":\"Generate_Via_AI_Agent\"},\"assets\":[],\"dataExtensions\":[],\"journeys\":[],\"automations\":[],\"executionPlan\":[]}}"
+}

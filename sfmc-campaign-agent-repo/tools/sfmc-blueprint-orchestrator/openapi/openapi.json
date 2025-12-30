@@ -1,0 +1,77 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "sfmc-blueprint-orchestrator",
+    "version": "1.0.0",
+    "description": "Blueprint-only tool that converts a campaign brief into a structured SFMC build plan (assets, DEs, journeys, automations). No SFMC writes."
+  },
+  "paths": {
+    "/generateBlueprint": {
+      "post": {
+        "operationId": "generateBlueprint",
+        "description": "Generate a structured SFMC campaign blueprint from a brief or normalized brief. Output is summary-first and safe for sandbox execution by downstream tools.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "campaignName": { "type": "string" },
+                  "brief": { "type": "string" },
+                  "normalizedBrief": { "type": "object" },
+                  "channels": {
+                    "type": "array",
+                    "items": { "type": "string", "enum": ["email", "sms", "push", "directmail"] }
+                  },
+                  "constraints": { "type": "object" },
+                  "includeRationale": { "type": "boolean", "default": false },
+
+                  "folderRoot": { "type": "string", "description": "Optional override for root sandbox folder (must remain under Generate_Via_AI_Agent when SANDBOX_ONLY=true)." },
+                  "emailFolder": { "type": "string" },
+                  "journeyFolder": { "type": "string" },
+                  "automationFolder": { "type": "string" },
+                  "deFolder": { "type": "string" }
+                },
+                "oneOf": [
+                  { "required": ["brief"] },
+                  { "required": ["normalizedBrief"] }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/validateBlueprint": {
+      "post": {
+        "operationId": "validateBlueprint",
+        "description": "Validate an existing blueprint output for completeness and guardrail compliance (caps, folder safety, required fields).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["blueprint"],
+                "properties": {
+                  "blueprint": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    }
+  }
+}

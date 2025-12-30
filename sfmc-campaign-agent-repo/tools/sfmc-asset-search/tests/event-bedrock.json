@@ -1,0 +1,13 @@
+{
+  "messageVersion": "1.0",
+  "actionGroup": "sfmc-asset-search",
+  "apiPath": "/searchAssets",
+  "httpMethod": "POST",
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "body": "{\"queryText\":\"Activation\",\"nameOperator\":\"contains\"}"
+      }
+    }
+  }
+}

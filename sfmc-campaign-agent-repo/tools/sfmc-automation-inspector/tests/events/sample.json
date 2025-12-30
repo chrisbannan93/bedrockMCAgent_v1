@@ -1,0 +1,5 @@
+{
+  "path": "/describeAutomation",
+  "httpMethod": "POST",
+  "body": "{\"id\":\"PUT_REAL_AUTOMATION_ID_HERE\",\"includeSchedule\":true,\"includeTaskSummary\":true,\"includeActivityDetails\":false,\"activityDetailsMax\":20,\"includeRaw\":false}"
+}
