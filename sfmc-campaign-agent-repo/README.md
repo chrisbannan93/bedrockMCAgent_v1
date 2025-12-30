@@ -25,7 +25,7 @@ Bedrock Agent
 
 **Email flow (draft-only):**
 1. `sfmc-brief-normalizer` (optional) → normalize brief
-2. `sfmc-folder-resolver` → resolve/create safe folder and return `categoryId`
+2. `sfmc-asset-search` (using `/resolveFolder`) → resolve/create safe folder and return `categoryId`
 3. `sfmc-email-composer` → generate email content + `emailBlueprint`
 4. `sfmc-email-asset-writer` → create a draft Content Builder asset
 
@@ -48,9 +48,8 @@ Each tool has:
 | --- | --- | --- |
 | `sfmc-health-inspector` | Validate SFMC creds + health probes | Read-only |
 | `sfmc-brief-normalizer` | Normalize campaign briefs | Read-only |
-| `sfmc-folder-resolver` | Resolve/create safe Content Builder folders | Write (safe-zone only) |
 | `sfmc-category-path-inspector` | Resolve categoryId → folder path | Read-only |
-| `sfmc-asset-search` | Search Content Builder assets | Read-only |
+| `sfmc-asset-search` | Search Content Builder assets and resolve/create folders. | Read/Write (safe-zone only for folder creation) |
 | `sfmc-data-extension-inspector` | Inspect DE schema + sample rows | Read-only |
 | `sfmc-automation-inspector` | Inspect Automation Studio | Read-only |
 | `sfmc-journey-inspector` | Inspect Journey Builder | Read-only |
