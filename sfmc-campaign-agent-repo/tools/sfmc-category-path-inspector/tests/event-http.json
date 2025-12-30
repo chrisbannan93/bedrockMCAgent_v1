@@ -1,7 +1,5 @@
 {
+  "path": "/getCategoryPath",
   "httpMethod": "POST",
-  "path": "/__REPLACE_ME_API_PATH__",
-  "headers": { "Content-Type": "application/json" },
-  "isBase64Encoded": false,
-  "body": "{\"__REPLACE_ME_KEY__\":\"__REPLACE_ME_VALUE__\"}"
+  "body": "{\"categoryId\":123456,\"maxDepth\":20}"
 }
