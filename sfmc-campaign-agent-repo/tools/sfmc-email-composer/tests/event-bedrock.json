@@ -4,17 +4,17 @@
   "actionGroupInvocationInput": {
     "actionGroupName": "sfmc-email-composer",
     "apiPath": "/composeEmail",
-    "verb": "POST",
+    "httpMethod": "POST",
     "requestBody": {
       "content": {
         "application/json": {
-          "properties": [
-            { "name": "brand", "type": "string", "value": "Dodo" },
-            { "name": "brief", "type": "string", "value": "Remind customers their bill is due soon and how to pay online." },
-            { "name": "assetName", "type": "string", "value": "AGENT_TEST_Email_01" },
-            { "name": "folderPath", "type": "string", "value": "Generate_Via_AI_Agent/Email/Examples" },
-            { "name": "returnHtmlB64", "type": "boolean", "value": "true" }
-          ]
+          "body": {
+            "brand": "Dodo",
+            "brief": "Remind customers their bill is due soon and how to pay online.",
+            "assetName": "AGENT_TEST_Email_01",
+            "folderPath": "Generate_Via_AI_Agent/Email/Examples",
+            "returnHtmlB64": true
+          }
         }
       }
     }

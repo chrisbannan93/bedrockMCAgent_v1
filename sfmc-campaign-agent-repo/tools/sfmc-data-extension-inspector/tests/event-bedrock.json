@@ -4,15 +4,15 @@
   "actionGroupInvocationInput": {
     "actionGroupName": "sfmc-data-extension-inspector",
     "apiPath": "/inspectDataExtension",
-    "verb": "POST",
+    "httpMethod": "POST",
     "requestBody": {
       "content": {
         "application/json": {
-          "properties": [
-            { "name": "customerKey", "type": "string", "value": "AGENT_TEST_DE_01" },
-            { "name": "includeFolderPath", "type": "boolean", "value": "true" },
-            { "name": "includeFields", "type": "boolean", "value": "true" }
-          ]
+          "body": {
+            "customerKey": "AGENT_TEST_DE_01",
+            "includeFolderPath": true,
+            "includeFields": true
+          }
         }
       }
     }

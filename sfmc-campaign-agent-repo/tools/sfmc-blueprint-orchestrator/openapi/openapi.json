@@ -15,34 +15,22 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "campaignName": { "type": "string" },
-                  "brief": { "type": "string" },
-                  "normalizedBrief": { "type": "object" },
-                  "channels": {
-                    "type": "array",
-                    "items": { "type": "string", "enum": ["email", "sms", "push", "directmail"] }
-                  },
-                  "constraints": { "type": "object" },
-                  "includeRationale": { "type": "boolean", "default": false },
-
-                  "folderRoot": { "type": "string", "description": "Optional override for root sandbox folder (must remain under Generate_Via_AI_Agent when SANDBOX_ONLY=true)." },
-                  "emailFolder": { "type": "string" },
-                  "journeyFolder": { "type": "string" },
-                  "automationFolder": { "type": "string" },
-                  "deFolder": { "type": "string" }
-                },
-                "oneOf": [
-                  { "required": ["brief"] },
-                  { "required": ["normalizedBrief"] }
-                ]
+                "$ref": "#/components/schemas/GenerateBlueprintRequest"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "OK" },
+          "200": {
+            "description": "Blueprint generated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateBlueprintResponse"
+                }
+              }
+            }
+          },
           "400": { "description": "Bad Request" },
           "500": { "description": "Server Error" }
         }
@@ -57,19 +45,117 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["blueprint"],
-                "properties": {
-                  "blueprint": { "type": "object" }
-                }
+                "$ref": "#/components/schemas/ValidateBlueprintRequest"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "OK" },
+          "200": {
+            "description": "Validation complete.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateBlueprintResponse"
+                }
+              }
+            }
+          },
           "400": { "description": "Bad Request" },
           "500": { "description": "Server Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GenerateBlueprintRequest": {
+        "type": "object",
+        "properties": {
+          "campaignName": { "type": "string" },
+          "brief": { "type": "string" },
+          "normalizedBrief": { "type": "object" },
+          "channels": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["email", "sms", "push", "directmail"] }
+          },
+          "constraints": { "type": "object" },
+          "includeRationale": { "type": "boolean", "default": false },
+          "folderRoot": { "type": "string", "description": "Optional override for root sandbox folder (must remain under Generate_Via_AI_Agent when SANDBOX_ONLY=true)." },
+          "emailFolder": { "type": "string" },
+          "journeyFolder": { "type": "string" },
+          "automationFolder": { "type": "string" },
+          "deFolder": { "type": "string" }
+        },
+        "oneOf": [
+          { "required": ["brief"] },
+          { "required": ["normalizedBrief"] }
+        ]
+      },
+      "ValidateBlueprintRequest": {
+        "type": "object",
+        "required": ["blueprint"],
+        "properties": {
+          "blueprint": { "type": "object" }
+        }
+      },
+      "GenerateBlueprintResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "input": { "type": "object" },
+          "output": { "$ref": "#/components/schemas/Blueprint" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ValidateBlueprintResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "input": { "type": "object" },
+          "output": {
+            "type": "object",
+            "properties": {
+              "valid": { "type": "boolean" },
+              "errors": { "type": "array", "items": { "type": "string" } },
+              "warnings": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Blueprint": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": { "type": "string" },
+          "campaign": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "objective": { "type": "string" },
+              "audience": { "type": "string" },
+              "offer": { "type": "string" },
+              "timing": { "type": "string" }
+            }
+          },
+          "folders": {
+            "type": "object",
+            "properties": {
+              "root": { "type": "string" },
+              "emails": { "type": "string" },
+              "journeys": { "type": "string" },
+              "automations": { "type": "string" },
+              "dataExtensions": { "type": "string" }
+            }
+          },
+          "assets": { "type": "array", "items": { "type": "object" } },
+          "dataExtensions": { "type": "array", "items": { "type": "object" } },
+          "journeys": { "type": "array", "items": { "type": "object" } },
+          "automations": { "type": "array", "items": { "type": "object" } },
+          "executionPlan": { "type": "array", "items": { "type": "object" } }
         }
       }
     }

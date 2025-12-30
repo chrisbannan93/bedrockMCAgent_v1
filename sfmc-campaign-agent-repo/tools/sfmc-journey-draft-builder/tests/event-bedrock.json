@@ -4,7 +4,7 @@
   "actionGroupInvocationInput": {
     "actionGroupName": "sfmc-journey-draft-builder",
     "apiPath": "/journeydraft",
-    "verb": "POST",
+    "httpMethod": "POST",
     "requestBody": {
       "content": {
         "application/json": {

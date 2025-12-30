@@ -8,14 +8,16 @@
     "requestBody": {
       "content": {
         "application/json": {
-          "categoryId": 123456,
-          "emailBlueprint": {
-            "name": "AGENT_TEST_Email_01",
-            "folderPath": "Generate_Via_AI_Agent/Comms",
-            "assetTypeName": "htmlemail",
-            "subject": "Your Dodo bill is due soon",
-            "preheader": "Pay online in minutes",
-            "htmlContent": "<html><body>...</body></html>"
+          "body": {
+            "categoryId": 123456,
+            "emailBlueprint": {
+              "name": "AGENT_TEST_Email_01",
+              "folderPath": "Generate_Via_AI_Agent/Comms",
+              "assetTypeName": "htmlemail",
+              "subject": "Your Dodo bill is due soon",
+              "preheader": "Pay online in minutes",
+              "htmlContent": "<html><body>...</body></html>"
+            }
           }
         }
       }

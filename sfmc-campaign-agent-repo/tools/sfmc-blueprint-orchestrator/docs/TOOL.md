@@ -37,7 +37,7 @@ validateBlueprint:
 ## Output schema (high-level)
 {
   ok: true,
-  tool: "blueprint_orchestrator",
+  tool: "blueprint_orchestrator_generate",
   input: { ... },
   output: {
     schemaVersion,
@@ -66,3 +66,5 @@ validateBlueprint:
 
 ## Notes
 This tool should be deterministic and conservative. Prefer returning fewer, higher-confidence blueprint items over exhaustive guessing.
+
+Note that the `/validateBlueprint` endpoint returns the tool name `blueprint_orchestrator_validate`.
