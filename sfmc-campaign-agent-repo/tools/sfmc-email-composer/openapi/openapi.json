@@ -3,7 +3,7 @@
   "info": {
     "title": "SFMC Email Composer (Dodo-only)",
     "version": "1.1.0",
-    "description": "Composes Dodo SFMC sandbox email drafts (subject, preheader, HTML) using optional Bedrock KB RAG + model. Can create a draft HTML Email asset in Content Builder using categoryId (use folder-resolver tool first)."
+    "description": "Composes Dodo SFMC sandbox email drafts (subject, preheader, HTML) using optional Bedrock KB RAG + model."
   },
   "paths": {
     "/composeEmail": {
@@ -153,35 +153,6 @@
           "textContent": { "type": "string" },
           "ragUsed": { "type": "boolean" },
           "ragSources": { "type": "array", "items": { "$ref": "#/components/schemas/RagSource" } },
-          "warnings": { "type": "array", "items": { "type": "string" } }
-        }
-      },
-      "CreateEmailAssetRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["name", "categoryId", "subject", "preheader"],
-        "properties": {
-          "brand": { "type": "string", "default": "Dodo" },
-          "name": { "type": "string" },
-          "categoryId": { "type": "integer", "minimum": 1, "description": "SFMC category (folder) ID. Obtain via sfmc-folder-resolver." },
-          "subject": { "type": "string" },
-          "preheader": { "type": "string", "description": "Required (may be empty string)." },
-          "htmlContent": { "type": "string", "description": "Raw HTML." },
-          "htmlContentB64": { "type": "string", "description": "Base64-encoded HTML (UTF-8). If provided, takes precedence." }
-        },
-        "oneOf": [
-          { "required": ["htmlContentB64"] },
-          { "required": ["htmlContent"] }
-        ]
-      },
-      "CreateEmailAssetResponse": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["created", "categoryId", "warnings"],
-        "properties": {
-          "created": { "type": "boolean" },
-          "categoryId": { "type": "integer" },
-          "assetId": { "type": "string", "description": "Returned for internal chaining; do not echo in chat." },
           "warnings": { "type": "array", "items": { "type": "string" } }
         }
       },

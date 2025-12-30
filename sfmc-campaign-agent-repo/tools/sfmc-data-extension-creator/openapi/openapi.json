@@ -95,30 +95,6 @@
           }
         ]
       },
-      "DescribeDataExtensionRequest": {
-        "type": "object",
-        "required": ["customerKey"],
-        "properties": {
-          "customerKey": { "type": "string" },
-          "includeFields": { "type": "boolean", "default": true },
-          "includeRaw": { "type": "boolean", "default": false }
-        }
-      },
-      "SearchRequest": {
-        "type": "object",
-        "required": ["queryText"],
-        "properties": {
-          "queryText": { "type": "string" },
-          "nameOperator": {
-            "type": "string",
-            "enum": ["contains", "startswith", "equals"],
-            "default": "contains"
-          },
-          "page": { "type": "integer", "default": 1 },
-          "pageSize": { "type": "integer", "default": 25 },
-          "includeRaw": { "type": "boolean", "default": false }
-        }
-      }
     }
   }
 }
