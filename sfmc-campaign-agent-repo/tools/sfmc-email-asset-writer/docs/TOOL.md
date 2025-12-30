@@ -2,7 +2,7 @@
 
 Dodo-only, sandbox-only tool for creating **draft** HTML Email assets in SFMC Content Builder.
 
-This tool is designed to take the `emailBlueprint` output from `sfmc-email-composer` plus a `categoryId` returned by `sfmc-folder-resolver`.
+This tool is designed to take the `emailBlueprint` output from `sfmc-email-composer` plus a `categoryId` returned by `sfmc-asset-search` `/resolveFolder`.
 
 ---
 
@@ -11,7 +11,7 @@ This tool is designed to take the `emailBlueprint` output from `sfmc-email-compo
 - **Sandbox only.** Never use production BUs or production credentials.
 - **Dodo only.** Requests for other brands must be rejected.
 - **Draft only.** No sends, scheduling, activation, or publish actions.
-- **No folderPath resolution.** You must call `sfmc-folder-resolver` to obtain a `categoryId`.
+- **No folderPath resolution.** You must call `sfmc-asset-search` `/resolveFolder` to obtain a `categoryId`.
 
 ### Sandbox enforcement (recommended)
 Set `SFMC_ALLOWED_ACCOUNT_ID` to the sandbox MID/account_id. The Lambda will refuse secrets whose `account_id` does not match.
@@ -25,7 +25,7 @@ Set `SFMC_ALLOWED_ACCOUNT_ID` to the sandbox MID/account_id. The Lambda will ref
 Creates a **draft** HTML Email asset in Content Builder.
 
 #### Required
-- `categoryId`: folder/category id (must be >= 1) from `sfmc-folder-resolver`
+- `categoryId`: folder/category id (must be >= 1) from `sfmc-asset-search` `/resolveFolder`
 - Either:
   - `emailBlueprint` (from `sfmc-email-composer`), OR
   - direct fields: `name`, `subject`, `preheader`, and `htmlContent` or `htmlContentB64`
@@ -60,7 +60,7 @@ Creates a **draft** HTML Email asset in Content Builder.
 
 Typical sequence for “create a draft email asset”:
 1) `sfmc-brief-normalizer` (if brief is messy)
-2) `sfmc-folder-resolver` → returns `categoryId`
+2) `sfmc-asset-search` `/resolveFolder` → returns `categoryId`
 3) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`)
 4) `sfmc-email-asset-writer` `/writeEmailAsset` using `emailBlueprint` + `categoryId`
 
@@ -69,5 +69,5 @@ Typical sequence for “create a draft email asset”:
 ## Definition of done
 
 - `/writeEmailAsset` succeeds in sandbox with a known safe `categoryId`.
-- Passing `folderPath` without `categoryId` returns a clear 400 telling callers to use folder-resolver.
+- Passing `folderPath` without `categoryId` returns a clear 400 telling callers to use `sfmc-asset-search` `/resolveFolder`.
 - If `SFMC_ALLOWED_ACCOUNT_ID` is set, secrets with mismatched `account_id` are rejected.

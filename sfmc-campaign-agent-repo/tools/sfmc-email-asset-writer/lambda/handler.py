@@ -373,7 +373,7 @@ def _extract_blueprint(params: Dict[str, Any]) -> Tuple[Dict[str, Any], list]:
     if not name:
         warnings.append("emailBlueprint.name is missing; supply assetName/name in the request.")
     if not folder_path:
-        warnings.append("emailBlueprint.folderPath is missing; use folder-resolver to determine categoryId.")
+        warnings.append("emailBlueprint.folderPath is missing; use sfmc-asset-search /resolveFolder to determine categoryId.")
 
     return {
         "brand": brand,
@@ -411,11 +411,13 @@ def _create_email_asset(params: Dict[str, Any]) -> Tuple[int, dict]:
     if category_id is None:
         extra_warnings = params.get("warnings", [])
         if params.get("folderPath"):
-            extra_warnings = extra_warnings + ["folderPath provided without categoryId. Use sfmc-folder-resolver first."]
+            extra_warnings = extra_warnings + [
+                "folderPath provided without categoryId. Use sfmc-asset-search /resolveFolder first."
+            ]
         return 400, {
             "created": False,
             "error": "Bad request",
-            "message": "categoryId is required. Use sfmc-folder-resolver to obtain it.",
+            "message": "categoryId is required. Use sfmc-asset-search /resolveFolder to obtain it.",
             "warnings": ["categoryId is required."] + extra_warnings,
         }
 
@@ -525,7 +527,7 @@ def _create_email_asset(params: Dict[str, Any]) -> Tuple[int, dict]:
             "warnings": warnings,
         }
     except Exception as e:
-        logger.exception("createEmailAsset failed")
+        logger.exception("writeEmailAsset failed")
         return 502, {
             "created": False,
             "error": "SFMC dependency failed",
