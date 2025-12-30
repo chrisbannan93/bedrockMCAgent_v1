@@ -16,7 +16,7 @@ This tool:
 - **Dodo only.** Requests for other brands must be rejected.
 - **Draft only.** This tool does not send, schedule, trigger, publish, or activate anything.
 - **No folderPath support.** Folder resolution/creation is handled by `sfmc-folder-resolver`.  
-  You must obtain a `categoryId` first, then call `createEmailAsset`.
+  You must obtain a `categoryId` first, then call `sfmc-email-asset-writer` (preferred) or the legacy `createEmailAsset`.
 
 ### Sandbox enforcement (recommended)
 Set `SFMC_ALLOWED_ACCOUNT_ID` to the sandbox MID/account_id. The Lambda will refuse secrets whose `account_id` does not match.
@@ -115,10 +115,8 @@ Creates a **draft** HTML Email asset in Content Builder. New flows should use `s
 ## Local testing checklist (recommended)
 
 Add a small `tests/` folder per tool with:
-- `event-bedrock-composeEmail.json`
-- `event-bedrock-createEmailAsset.json`
-- `event-http-composeEmail.json`
-- `event-http-createEmailAsset.json`
+- `event-bedrock.json` (composeEmail)
+- `event-http.json` (composeEmail)
 
 And a simple runner script:
 - loads env vars
