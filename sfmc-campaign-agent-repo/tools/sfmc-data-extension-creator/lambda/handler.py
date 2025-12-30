@@ -1079,6 +1079,7 @@ def _handle_create_de(params: Dict[str, Any]) -> Tuple[int, dict]:
 
     return 200, resp2
 
+
 # -----------------------------
 # Lambda entrypoint
 # -----------------------------
@@ -1100,6 +1101,7 @@ def lambda_handler(event, context):
             status, body = _handle_create_de(params)
             return _bedrock_actiongroup_response(event, body, http_code=status)
 
+
         return _bedrock_actiongroup_response(event, {"ok": False, "error": f"Unknown apiPath: {api_path}"}, http_code=400)
 
     # Direct invoke (API Gateway-style)
@@ -1118,5 +1120,6 @@ def lambda_handler(event, context):
     if path in ("/createdataextension", "/createde"):
         status, body = _handle_create_de(params)
         return _json_response(body, status)
+
 
     return _json_response({"ok": False, "error": f"Unknown path: {path}"}, 400)

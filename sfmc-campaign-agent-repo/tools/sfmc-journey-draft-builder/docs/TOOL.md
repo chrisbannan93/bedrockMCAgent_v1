@@ -1,102 +1,68 @@
 # sfmc-journey-draft-builder
 
 ## Purpose
-This tool validates a Journey Spec payload and can create a draft journey in the SFMC sandbox. It is read-only by default and will only perform a create operation when explicitly instructed.
+This tool validates a Journey Spec payload and can optionally create a draft Journey in the SFMC sandbox. It's designed to be a safe way to build and test journey structures before they are fully implemented.
 
 ## Hard guardrails
-- Dodo-only
-- Sandbox-only
-- No production references
-- No live sends / activation / publish
-- Do not echo SFMC IDs in chat responses
+- **Dodo-only**: This tool is restricted to the "Dodo" brand.
+- **Sandbox-only**: All operations are restricted to the SFMC sandbox environment, enforced by the `SFMC_REQUIRED_ENV` environment variable.
+- **No production references**: The tool will block requests that point to production hosts.
+- **No live sends / activation / publish**: This tool can only create draft journeys. It cannot activate, publish, or send messages.
+- **Do not echo SFMC IDs in chat responses**: This is a global agent rule.
 
 ## Environment variables
+### Required
 - `SFMC_SECRET_ARN` or `SFMC_SECRET_ID`: The ARN or ID of the AWS Secrets Manager secret containing SFMC API credentials.
-- `SFMC_ENV`: The SFMC environment (e.g., "sandbox").
-- `SFMC_REQUIRED_ENV`: The required SFMC environment for the tool to operate (e.g., "sandbox").
-- `SFMC_ALLOWED_ACCOUNT_ID`: (Optional) The SFMC account ID that the tool is allowed to interact with.
-- `SFMC_ALLOWED_HOST_SUFFIXES`: (Optional) A comma-separated list of allowed host suffixes for SFMC API calls.
-- `DRY_RUN_DEFAULT`: (Optional) Whether to default to a dry run. Defaults to `true`.
+- `SFMC_ENV`: The current SFMC environment (e.g., "sandbox"). Must match `SFMC_REQUIRED_ENV`.
+- `SFMC_REQUIRED_ENV`: The required SFMC environment (e.g., "sandbox"). Defaults to "sandbox".
+
+### Optional
+- `SFMC_ALLOWED_ACCOUNT_ID`: If set, the tool will only operate on the specified SFMC account ID.
+- `SFMC_ALLOWED_HOST_SUFFIXES`: A comma-separated list of allowed host suffixes for SFMC API calls (e.g., ".marketingcloudapps.com").
+- `DRY_RUN_DEFAULT`: Defaults to `true`. If `true`, the tool will only validate the journey spec and will not create a draft journey in SFMC unless `dryRun` is explicitly set to `false` in the request.
 
 ## Operations
-- `POST /journeydraft`: Validates and returns a Journey Spec payload. Optionally creates a draft journey in SFMC.
-- `POST /draft`: An alias for `/journeydraft`.
-- `GET /healthz`: Performs a health check and verifies runtime configuration.
+
+### POST `/journeydraft`
+- **`operationId`**: `journeyDraftBuild`
+- **Description**: Validates a Journey Spec payload. If `createInSfmc` is `true` and `dryRun` is `false`, it will also attempt to create a draft journey in SFMC.
+
+### POST `/draft`
+- **`operationId`**: `journeyDraftBuildAlias`
+- **Description**: An alias for `/journeydraft`.
+
+### GET `/healthz`
+- **`operationId`**: `healthz`
+- **Description**: A lightweight health check that verifies the tool's configuration and guardrails without making any calls to SFMC.
 
 ## Examples
 
-### Example 1: Validate a Journey Spec (Dry Run)
-
-This example validates a journey spec without creating it in SFMC.
-
-**Request:**
+### Validate a Journey Spec (dry run)
 ```json
 {
-  "dryRun": true,
-  "journeySpec": {
-    "key": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
-    "name": "Test Journey",
-    "workflowApiVersion": "1.0",
-    "triggers": [],
-    "activities": []
+  "apiPath": "/journeydraft",
+  "httpMethod": "POST",
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "body": "{\\"journeySpec\\": {\\"key\\": \\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\\", \\"name\\": \\"Test Journey\\", \\"workflowApiVersion\\": \\"1.0\\", \\"triggers\\": [], \\"activities\\": []}}"
+      }
+    }
   }
 }
 ```
 
-**Response:**
+### Create a Draft Journey in SFMC
 ```json
 {
-  "ok": true,
-  "tool": "sfmc_journey_draft_builder",
-  "journeySpec": {
-    "key": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
-    "name": "Test Journey",
-    "workflowApiVersion": "1.0",
-    "triggers": [],
-    "activities": []
-  },
-  "createAttempted": false
-}
-```
-
-### Example 2: Create a Draft Journey in SFMC
-
-This example creates a draft journey in SFMC.
-
-**Request:**
-```json
-{
-  "createInSfmc": true,
-  "dryRun": false,
-  "journeySpec": {
-    "key": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
-    "name": "Test Journey",
-    "workflowApiVersion": "1.0",
-    "triggers": [],
-    "activities": []
+  "apiPath": "/journeydraft",
+  "httpMethod": "POST",
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "body": "{\\"createInSfmc\\": true, \\"dryRun\\": false, \\"journeySpec\\": {\\"key\\": \\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\\", \\"name\\": \\"Test Journey\\", \\"workflowApiVersion\\": \\"1.0\\", \\"triggers\\": [], \\"activities\\": []}}"
+      }
+    }
   }
 }
 ```
-
-**Response:**
-```json
-{
-  "ok": true,
-  "tool": "sfmc_journey_draft_builder",
-  "journeySpec": {
-    "key": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
-    "name": "Test Journey",
-    "workflowApiVersion": "1.0",
-    "triggers": [],
-    "activities": []
-  },
-  "createAttempted": true,
-  "sfmcCreateResult": {
-
-  }
-}
-```
-
-## Known issues / TODO
-- The tool does not yet support updating existing journeys.
-- The `sfmcCreateResult` in the response is not yet fully populated with the SFMC API response.

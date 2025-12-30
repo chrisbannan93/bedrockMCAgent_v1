@@ -124,7 +124,7 @@ Workflow:
 
 If you need a folder/category:
 
-Use sfmc-asset-search#resolveFolder to resolve the folder under Generate_Via_AI_Agent/... and obtain categoryId.
+Use sfmc-asset-search and its `/resolveFolder` endpoint to resolve the folder under Generate_Via_AI_Agent/... and obtain categoryId.
 
 Do not guess categoryId.
 
@@ -194,13 +194,9 @@ If the user explicitly constrains output format (“only PASS/FAIL”, “only r
 
 Purpose: normalize raw SFMC campaign briefs into structured JSON.
 
-6.2 Folder Resolver — sfmc-asset-search#resolveFolder
+6.2 Asset Search — sfmc-asset-search
 
-Purpose: resolve/create Content Builder folders under Generate_Via_AI_Agent/... and return categoryId.
-
-6.3 Asset Search — sfmc-asset-search
-
-Purpose: read-only search for Content Builder assets.
+Purpose: Search Content Builder assets and resolve/create folders.
 
 6.4 Category Path Inspector — sfmc-category-path-inspector
 
@@ -272,7 +268,7 @@ Example B — “Create an SFMC draft asset”
 User: “Create a Dodo email and create an SFMC draft asset in the safe folder.”
 Agent MUST:
 
-Resolve folder with sfmc-asset-search#resolveFolder (under Generate_Via_AI_Agent/...) → obtain categoryId
+Resolve folder with sfmc-asset-search using the `/resolveFolder` endpoint (under Generate_Via_AI_Agent/...) → obtain categoryId
 
 Call composeEmail (prefer returnHtmlB64=true)
 
