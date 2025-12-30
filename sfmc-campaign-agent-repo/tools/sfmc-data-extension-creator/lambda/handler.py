@@ -1079,109 +1079,6 @@ def _handle_create_de(params: Dict[str, Any]) -> Tuple[int, dict]:
 
     return 200, resp2
 
-def _handle_describe_de(params: Dict[str, Any]) -> Tuple[int, dict]:
-    include_fields = bool(params.get("includeFields", True))
-    include_raw = bool(params.get("includeRaw", False))
-
-    customer_key = str(params.get("customerKey") or params.get("key") or "").strip()
-    if not customer_key:
-        return 400, {"ok": False, "error": "customerKey is required"}
-
-    exists, existing, warnings = _data_extension_exists_by_customer_key(customer_key)
-    if not exists:
-        return 404, {"ok": False, "error": "DATA_EXTENSION_NOT_FOUND", "customerKey": customer_key, "warnings": warnings}
-
-    out = {
-        "ok": True,
-        "tool": "data_extension_describe",
-        "customerKey": customer_key,
-        "dataExtension": existing,
-        "fields": [],
-        "warnings": warnings,
-    }
-
-    if include_fields:
-        fields, fw = _retrieve_de_fields_by_customer_key(customer_key)
-        out["fields"] = fields
-        out["warnings"].extend(fw)
-
-    # include_raw here means "include SOAP raw" is not implemented per-call (kept minimal)
-    # but we keep the flag for schema consistency.
-    out["includeRaw"] = include_raw
-    return 200, out
-
-def _handle_search_des(params: Dict[str, Any]) -> Tuple[int, dict]:
-    """
-    Search DEs by name (SOAP retrieve with like).
-    NOTE: SOAP Retrieve 'like' uses % wildcards.
-    """
-    query_text = str(params.get("queryText") or "").strip()
-    if not query_text:
-        return 400, {"ok": False, "error": "queryText is required"}
-
-    name_operator = str(params.get("nameOperator") or "contains").strip().lower()
-    include_raw = bool(params.get("includeRaw", False))
-
-    page = int(params.get("page") or 1)
-    page = 1 if page < 1 else page
-
-    page_size = int(params.get("pageSize") or 25)
-    if page_size < 1:
-        page_size = 1
-    if page_size > MAX_PAGE_SIZE:
-        page_size = MAX_PAGE_SIZE
-
-    # build like pattern
-    if name_operator in ("equals", "eq"):
-        op = "equals"
-        pattern = query_text
-    elif name_operator in ("startswith", "starts_with", "starts"):
-        op = "like"
-        pattern = query_text + "%"
-    else:
-        op = "like"
-        pattern = "%" + query_text + "%"
-
-    ok, results, raw = _soap_retrieve(
-        object_type="DataExtension",
-        properties=["ObjectID", "CustomerKey", "Name", "CategoryID", "CreatedDate", "ModifiedDate", "IsSendable"],
-        filter_xml=_soap_simple_filter("Name", op, pattern)
-    )
-
-    if not ok:
-        resp = {"ok": False, "error": "SFMC_SEARCH_FAILED"}
-        if include_raw:
-            resp["soapRaw"] = raw
-        return 502, resp
-
-    # cap + paginate in-code
-    warnings: List[str] = []
-    if len(results) > SEARCH_MAX_ITEMS:
-        warnings.append(f"search results capped at {SEARCH_MAX_ITEMS}")
-        results = results[:SEARCH_MAX_ITEMS]
-
-    total = len(results)
-    start = (page - 1) * page_size
-    end = start + page_size
-
-    items = results[start:end] if start < total else []
-
-    resp2 = {
-        "ok": True,
-        "tool": "data_extension_search",
-        "input": {
-            "queryText": query_text,
-            "nameOperator": name_operator,
-            "page": page,
-            "pageSize": page_size,
-        },
-        "count": total,
-        "items": items,
-        "warnings": warnings,
-    }
-    if include_raw:
-        resp2["soapRaw"] = raw
-    return 200, resp2
 
 # -----------------------------
 # Lambda entrypoint
@@ -1204,13 +1101,6 @@ def lambda_handler(event, context):
             status, body = _handle_create_de(params)
             return _bedrock_actiongroup_response(event, body, http_code=status)
 
-        if api_path in ("/describedataextension", "/getdataextension", "/describede"):
-            status, body = _handle_describe_de(params)
-            return _bedrock_actiongroup_response(event, body, http_code=status)
-
-        if api_path in ("/searchdataextensions", "/searchdes"):
-            status, body = _handle_search_des(params)
-            return _bedrock_actiongroup_response(event, body, http_code=status)
 
         return _bedrock_actiongroup_response(event, {"ok": False, "error": f"Unknown apiPath: {api_path}"}, http_code=400)
 
@@ -1231,12 +1121,5 @@ def lambda_handler(event, context):
         status, body = _handle_create_de(params)
         return _json_response(body, status)
 
-    if path in ("/describedataextension", "/getdataextension", "/describede"):
-        status, body = _handle_describe_de(params)
-        return _json_response(body, status)
-
-    if path in ("/searchdataextensions", "/searchdes"):
-        status, body = _handle_search_des(params)
-        return _json_response(body, status)
 
     return _json_response({"ok": False, "error": f"Unknown path: {path}"}, 400)
