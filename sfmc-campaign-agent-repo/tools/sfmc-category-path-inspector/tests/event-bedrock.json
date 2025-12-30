@@ -1,4 +1,6 @@
 {
+  "messageVersion": "1.0",
+  "actionGroup": "sfmc-category-path-inspector",
   "requestBody": {
     "content": {
       "application/json": {

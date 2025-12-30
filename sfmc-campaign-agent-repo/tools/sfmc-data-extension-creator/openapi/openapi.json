@@ -43,41 +43,6 @@
         }
       }
     },
-    "/describeDataExtension": {
-      "post": {
-        "operationId": "describeDataExtension",
-        "description": "Describe a Data Extension by customerKey (includes fields by default).",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/DescribeDataExtensionRequest" } }
-          }
-        },
-        "responses": {
-          "200": { "description": "OK" },
-          "404": { "description": "Not Found" },
-          "400": { "description": "Bad Request" },
-          "502": { "description": "Upstream Error" }
-        }
-      }
-    },
-    "/searchDataExtensions": {
-      "post": {
-        "operationId": "searchDataExtensions",
-        "description": "Search Data Extensions by name (contains/startsWith/equals). Results capped and paginated in-code.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": { "schema": { "$ref": "#/components/schemas/SearchRequest" } }
-          }
-        },
-        "responses": {
-          "200": { "description": "OK" },
-          "400": { "description": "Bad Request" },
-          "502": { "description": "Upstream Error" }
-        }
-      }
-    }
   },
   "components": {
     "schemas": {
@@ -130,30 +95,6 @@
           }
         ]
       },
-      "DescribeDataExtensionRequest": {
-        "type": "object",
-        "required": ["customerKey"],
-        "properties": {
-          "customerKey": { "type": "string" },
-          "includeFields": { "type": "boolean", "default": true },
-          "includeRaw": { "type": "boolean", "default": false }
-        }
-      },
-      "SearchRequest": {
-        "type": "object",
-        "required": ["queryText"],
-        "properties": {
-          "queryText": { "type": "string" },
-          "nameOperator": {
-            "type": "string",
-            "enum": ["contains", "startswith", "equals"],
-            "default": "contains"
-          },
-          "page": { "type": "integer", "default": 1 },
-          "pageSize": { "type": "integer", "default": 25 },
-          "includeRaw": { "type": "boolean", "default": false }
-        }
-      }
     }
   }
 }
