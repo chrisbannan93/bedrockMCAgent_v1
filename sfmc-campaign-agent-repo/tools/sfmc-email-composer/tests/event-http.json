@@ -1,5 +1,5 @@
 {
-  "path": "/composeEmail",
   "httpMethod": "POST",
-  "body": "{\"brand\":\"Dodo\",\"brief\":\"Remind customers their bill is due soon and how to pay online.\",\"assetName\":\"AGENT_TEST_Email_01\",\"folderPath\":\"Generate_Via_AI_Agent/Email/Examples\",\"returnHtmlB64\":true}"
+  "path": "/composeEmail",
+  "body": "{\\"brand\\":\\"Dodo\\",\\"brief\\":\\"A simple test email\\"}"
 }

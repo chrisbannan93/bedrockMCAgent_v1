@@ -1,5 +1,5 @@
 {
-  "path": "/writeEmailAsset",
   "httpMethod": "POST",
-  "body": "{\"brand\":\"Dodo\",\"categoryId\":123456,\"emailBlueprint\":{\"name\":\"AGENT_TEST_Email_01\",\"folderPath\":\"Generate_Via_AI_Agent/Email/Examples\",\"assetTypeName\":\"htmlemail\",\"subject\":\"Your Dodo bill is due soon\",\"preheader\":\"Pay online in minutes\",\"htmlContent\":\"<html><body>...</body></html>\"}}"
+  "path": "/writeEmailAsset",
+  "body": "{\\"categoryId\\": 12345, \\"name\\": \\"Test Email\\", \\"subject\\": \\"Test Subject\\", \\"preheader\\": \\"Test Preheader\\", \\"htmlContent\\": \\"<html><body><h1>Test</h1></body></html>\\"}"
 }

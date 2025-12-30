@@ -1,26 +1,50 @@
 {
-  "actionGroup": "sfmc-email-asset-writer",
   "messageVersion": "1.0",
-  "actionGroupInvocationInput": {
-    "actionGroupName": "sfmc-email-asset-writer",
-    "apiPath": "/writeEmailAsset",
-    "httpMethod": "POST",
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "body": {
-            "categoryId": 123456,
-            "emailBlueprint": {
-              "name": "AGENT_TEST_Email_01",
-              "folderPath": "Generate_Via_AI_Agent/Comms",
-              "assetTypeName": "htmlemail",
-              "subject": "Your Dodo bill is due soon",
-              "preheader": "Pay online in minutes",
-              "htmlContent": "<html><body>...</body></html>"
-            }
+  "agent": {
+    "name": "Jules",
+    "id": "AGENT123",
+    "alias": "JulesAlias",
+    "version": "1"
+  },
+  "inputText": "Create an email asset",
+  "sessionId": "SESSION456",
+  "actionGroup": "sfmc-email-asset-writer",
+  "apiPath": "/writeEmailAsset",
+  "httpMethod": "POST",
+  "parameters": [],
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "properties": [
+          {
+            "name": "categoryId",
+            "type": "integer",
+            "value": "12345"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "value": "Test Email"
+          },
+          {
+            "name": "subject",
+            "type": "string",
+            "value": "Test Subject"
+          },
+          {
+            "name": "preheader",
+            "type": "string",
+            "value": "Test Preheader"
+          },
+          {
+            "name": "htmlContent",
+            "type": "string",
+            "value": "<html><body><h1>Test</h1></body></html>"
           }
-        }
+        ]
       }
     }
-  }
+  },
+  "sessionAttributes": {},
+  "promptSessionAttributes": {}
 }

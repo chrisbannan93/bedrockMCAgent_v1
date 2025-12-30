@@ -1,21 +1,30 @@
 {
   "messageVersion": "1.0",
+  "agent": {
+    "name": "Jules",
+    "id": "AGENT123",
+    "alias": "JulesAlias",
+    "version": "1"
+  },
+  "inputText": "Search for journeys with 'Test' in the name",
+  "sessionId": "SESSION456",
   "actionGroup": "sfmc-journey-inspector",
-  "actionGroupInvocationInput": {
-    "actionGroupName": "sfmc-journey-inspector",
-    "apiPath": "/searchJourneys",
-    "httpMethod": "POST",
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "body": {
-            "nameOrDescription": "Activation",
-            "mostRecentVersionOnly": true,
-            "page": 1,
-            "pageSize": 25
+  "apiPath": "/searchJourneys",
+  "httpMethod": "POST",
+  "parameters": [],
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "properties": [
+          {
+            "name": "nameOrDescription",
+            "type": "string",
+            "value": "Test"
           }
-        }
+        ]
       }
     }
-  }
+  },
+  "sessionAttributes": {},
+  "promptSessionAttributes": {}
 }
