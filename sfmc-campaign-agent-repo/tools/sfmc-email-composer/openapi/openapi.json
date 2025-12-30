@@ -62,63 +62,6 @@
         }
       }
     },
-    "/createEmailAsset": {
-      "post": {
-        "operationId": "createEmailAsset",
-        "description": "Create a draft HTML Email asset in SFMC Content Builder sandbox using categoryId. Prefer the dedicated sfmc-email-asset-writer tool for new flows.",
-        "deprecated": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateEmailAssetRequest" },
-              "examples": {
-                "create_from_b64_with_categoryId": {
-                  "summary": "Create asset using categoryId and base64 HTML",
-                  "value": {
-                    "brand": "Dodo",
-                    "name": "AGENT_TEST_Email_01",
-                    "categoryId": 123456,
-                    "subject": "Your Dodo bill is due soon",
-                    "preheader": "Pay online in minutes",
-                    "htmlContentB64": "PGh0bWw+Li4uPC9odG1sPg=="
-                  }
-                },
-                "create_with_raw_html": {
-                  "summary": "Create asset using categoryId and raw HTML",
-                  "value": {
-                    "brand": "Dodo",
-                    "name": "AGENT_TEST_Email_02",
-                    "categoryId": 123456,
-                    "subject": "Planned maintenance this weekend",
-                    "preheader": "",
-                    "htmlContent": "<html><body><div>Hi there</div><div>...</div></body></html>"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Asset created (or handled failure)",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateEmailAssetResponse" } } }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
-          },
-          "500": {
-            "description": "Internal error",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
-          },
-          "502": {
-            "description": "SFMC dependency failed",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
-          }
-        }
-      }
-    }
   },
   "components": {
     "schemas": {

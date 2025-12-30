@@ -1,4 +1,8 @@
 {
+  "messageVersion": "1.0",
+  "actionGroup": "sfmc-category-path-inspector",
+  "apiPath": "/getCategoryPath",
+  "httpMethod": "POST",
   "requestBody": {
     "content": {
       "application/json": {
