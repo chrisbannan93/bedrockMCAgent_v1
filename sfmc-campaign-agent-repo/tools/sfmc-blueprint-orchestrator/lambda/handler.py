@@ -410,16 +410,15 @@ def generate_blueprint(params: Dict[str, Any]) -> Tuple[dict, List[str]]:
 
     # execution plan (downstream tools)
     execution_plan = [
-        {"step": 1, "tool": "sfmc-de-schema-designer", "description": "Confirm DE schema(s) for the campaign audience and tracking."},
-        {"step": 2, "tool": "sfmc-de-creator", "description": "Create DE(s) in sandbox folder structure."},
-        {"step": 3, "tool": "sfmc-query-designer", "description": "Design Query Activity(ies) to populate audience DE(s)."},
-        {"step": 4, "tool": "sfmc-automation-draft-creator", "description": "Create Automation draft for audience refresh (read-only/draft mode)."},
+        {"step": 1, "tool": "sfmc-data-extension-inspector", "description": "Inspect existing DEs and confirm required schema fields."},
+        {"step": 2, "tool": "sfmc-data-extension-creator", "description": "Create DE(s) in sandbox folder structure (if missing)."},
+        {"step": 3, "tool": "sfmc-automation-inspector", "description": "Inspect existing automations for audience refresh patterns."},
     ]
     if any(a.get("type") == "email" for a in assets):
         execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-email-composer", "description": "Draft email HTML/content from copy brief."})
         execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-email-asset-writer", "description": "Create Email asset(s) in Content Builder (sandbox folders)."})
     if journeys:
-        execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-journey-draft-creator", "description": "Create Journey draft aligned to blueprint steps."})
+        execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-journey-draft-builder", "description": "Create Journey draft aligned to blueprint steps."})
 
     out = {
         "schemaVersion": OUTPUT_SCHEMA_VERSION,

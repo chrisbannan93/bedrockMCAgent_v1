@@ -1,13 +1,18 @@
 {
   "messageVersion": "1.0",
-  "actionGroup": "__REPLACE_ME_ACTION_GROUP__",
-  "apiPath": "/__REPLACE_ME_API_PATH__",
-  "httpMethod": "POST",
-  "requestBody": {
-    "content": {
-      "application/json": {
-        "body": {
-          "__REPLACE_ME_KEY__": "__REPLACE_ME_VALUE__"
+  "actionGroup": "sfmc-folder-resolver",
+  "actionGroupInvocationInput": {
+    "actionGroupName": "sfmc-folder-resolver",
+    "apiPath": "/resolveFolder",
+    "verb": "POST",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "properties": [
+            { "name": "folderPath", "type": "string", "value": "Generate_Via_AI_Agent/Email/Examples" },
+            { "name": "createIfMissing", "type": "boolean", "value": "true" },
+            { "name": "assetFamily", "type": "string", "value": "content-builder" }
+          ]
         }
       }
     }

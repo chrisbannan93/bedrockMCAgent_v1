@@ -10,6 +10,7 @@ Enabled:
 - sfmc-automation-inspector
 - sfmc-journey-inspector
 - sfmc-email-composer
+- sfmc-email-asset-writer
 
 Agent groups not in Bedrock yet (i have put in codes that i think may work but you need to check them and make changes accordingly!):
 - sfmc-data-extension-creator

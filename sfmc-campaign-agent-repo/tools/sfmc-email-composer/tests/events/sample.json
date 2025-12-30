@@ -1,5 +1,5 @@
 {
-  "apiPath": "/health",
+  "path": "/composeEmail",
   "httpMethod": "POST",
-  "body": "{}"
+  "body": "{\"brand\":\"Dodo\",\"brief\":\"Reminder email for customers with bills due soon.\",\"returnHtmlB64\":true}"
 }

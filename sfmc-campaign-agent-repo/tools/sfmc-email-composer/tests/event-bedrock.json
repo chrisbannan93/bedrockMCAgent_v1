@@ -1,13 +1,20 @@
 {
   "messageVersion": "1.0",
-  "actionGroup": "__REPLACE_ME_ACTION_GROUP__",
-  "apiPath": "/__REPLACE_ME_API_PATH__",
-  "httpMethod": "POST",
-  "requestBody": {
-    "content": {
-      "application/json": {
-        "body": {
-          "__REPLACE_ME_KEY__": "__REPLACE_ME_VALUE__"
+  "actionGroup": "sfmc-email-composer",
+  "actionGroupInvocationInput": {
+    "actionGroupName": "sfmc-email-composer",
+    "apiPath": "/composeEmail",
+    "verb": "POST",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "properties": [
+            { "name": "brand", "type": "string", "value": "Dodo" },
+            { "name": "brief", "type": "string", "value": "Remind customers their bill is due soon and how to pay online." },
+            { "name": "assetName", "type": "string", "value": "AGENT_TEST_Email_01" },
+            { "name": "folderPath", "type": "string", "value": "Generate_Via_AI_Agent/Email/Examples" },
+            { "name": "returnHtmlB64", "type": "boolean", "value": "true" }
+          ]
         }
       }
     }

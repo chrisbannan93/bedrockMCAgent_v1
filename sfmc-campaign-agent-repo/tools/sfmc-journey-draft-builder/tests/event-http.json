@@ -1,7 +1,5 @@
 {
+  "path": "/journeydraft",
   "httpMethod": "POST",
-  "path": "/__REPLACE_ME_API_PATH__",
-  "headers": { "Content-Type": "application/json" },
-  "isBase64Encoded": false,
-  "body": "{\"__REPLACE_ME_KEY__\":\"__REPLACE_ME_VALUE__\"}"
+  "body": "{\"createInSfmc\":false,\"dryRun\":true,\"journeySpec\":{\"key\":\"00000000-0000-0000-0000-000000000001\",\"name\":\"Agent Test Journey 01\",\"workflowApiVersion\":1,\"triggers\":[{\"type\":\"Event\",\"key\":\"TRIGGER_1\",\"name\":\"Data Extension Entry\",\"arguments\":{}}],\"activities\":[{\"type\":\"WAIT\",\"name\":\"Wait 1 day\",\"key\":\"WAIT_1\",\"arguments\":{\"waitDuration\":1,\"waitUnit\":\"DAYS\"}}]}}"
 }
