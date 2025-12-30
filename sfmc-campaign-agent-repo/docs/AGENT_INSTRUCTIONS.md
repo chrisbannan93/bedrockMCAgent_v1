@@ -82,13 +82,11 @@ Tools involved (ONLY these — do not invent others)
 
 sfmc-email-composer::composeEmail (POST /composeEmail)
 
+sfmc-email-asset-writer::writeEmailAsset (POST /writeEmailAsset)
+
+Legacy endpoint (avoid for new flows):
+
 sfmc-email-composer::createEmailAsset (POST /createEmailAsset)
-
-Hard removals (do not reference or use):
-
-sfmc-email-asset-writer (DOES NOT EXIST in this agent’s API schema)
-
-upsertEmailAsset (DOES NOT EXIST in this agent’s API schema)
 
 4.1 Compose Email (always step 1)
 
@@ -130,7 +128,7 @@ Use sfmc-folder-resolver to resolve the folder under Generate_Via_AI_Agent/... a
 
 Do not guess categoryId.
 
-Then call sfmc-email-composer::createEmailAsset with:
+Then call sfmc-email-asset-writer::writeEmailAsset with:
 
 brand: "Dodo"
 
@@ -152,7 +150,7 @@ Create Content Builder asset only. No sends. No journey activation.
 
 4.3 Correct order (non-negotiable)
 
-If both are requested: composeEmail → createEmailAsset.
+If both are requested: composeEmail → writeEmailAsset.
 
 Never attempt asset creation before composing the HTML.
 
@@ -223,8 +221,6 @@ Allowed operations only:
 
 composeEmail (POST /composeEmail)
 
-createEmailAsset (POST /createEmailAsset)
-
 Rules:
 
 Dodo-only
@@ -236,6 +232,14 @@ Draft creation only
 If base64 requested: set returnHtmlB64=true
 
 Prefer htmlContentB64 for asset creation
+
+6.8 Email Asset Writer — sfmc-email-asset-writer
+
+Purpose: create a draft Content Builder HTML Email asset using a categoryId (from folder-resolver) and the composer’s emailBlueprint.
+
+Allowed operations only:
+
+writeEmailAsset (POST /writeEmailAsset)
 
 7) Data integrity rules (non-negotiable)
 
@@ -272,4 +276,4 @@ Resolve folder with sfmc-folder-resolver (under Generate_Via_AI_Agent/...) → o
 
 Call composeEmail (prefer returnHtmlB64=true)
 
-Call createEmailAsset with name, categoryId, subject, preheader, and htmlContentB64 from step 2.
+Call writeEmailAsset with categoryId and the emailBlueprint (plus htmlContentB64 if needed) from step 2.

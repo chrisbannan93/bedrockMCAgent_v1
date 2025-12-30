@@ -65,7 +65,8 @@
     "/createEmailAsset": {
       "post": {
         "operationId": "createEmailAsset",
-        "description": "Create a draft HTML Email asset in SFMC Content Builder sandbox using categoryId. Use sfmc-folder-resolver to obtain categoryId for safe folders.",
+        "description": "Create a draft HTML Email asset in SFMC Content Builder sandbox using categoryId. Prefer the dedicated sfmc-email-asset-writer tool for new flows.",
+        "deprecated": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -158,7 +159,7 @@
           "emailGoal": { "type": "string" },
           "audienceSummary": { "type": "string" },
           "requiredLinks": { "type": "array", "items": { "type": "string" } },
-          "useKnowledgeBase": { "type": "boolean", "description": "If false, skips KB retrieval entirely." },
+          "useKnowledgeBase": { "type": "boolean", "description": "If true, enables KB retrieval inside the Lambda. Prefer agent-native KB attachment when possible.", "default": false },
           "kbId": { "type": "string", "description": "Knowledge Base ID override." },
           "ragContext": {
             "type": "array",
@@ -171,19 +172,42 @@
           "temperature": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.4 },
           "returnHtmlB64": { "type": "boolean", "default": false },
           "personalizationTokens": { "type": "array", "items": { "type": "string" } },
-          "requiredBlocks": { "type": "array", "items": { "type": "string" } }
+          "requiredBlocks": { "type": "array", "items": { "type": "string" } },
+          "assetName": { "type": "string", "description": "Optional asset name to include in emailBlueprint." },
+          "name": { "type": "string", "description": "Alias for assetName." },
+          "folderPath": { "type": "string", "description": "Optional folder path to include in emailBlueprint (used downstream by asset writer)."},
+          "assetTypeName": { "type": "string", "description": "Optional asset type name for blueprint. Defaults to htmlemail." }
         }
       },
       "ComposeEmailResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["brand", "subject", "preheader", "html", "htmlIsB64", "ragUsed", "ragSources", "warnings"],
+        "required": ["brand", "subject", "preheader", "html", "htmlIsB64", "ragUsed", "ragSources", "warnings", "emailBlueprint"],
         "properties": {
           "brand": { "type": "string" },
           "subject": { "type": "string" },
           "preheader": { "type": "string" },
           "html": { "type": "string", "description": "HTML string (or base64 if htmlIsB64=true)" },
           "htmlIsB64": { "type": "boolean" },
+          "ragUsed": { "type": "boolean" },
+          "ragSources": { "type": "array", "items": { "$ref": "#/components/schemas/RagSource" } },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "emailBlueprint": { "$ref": "#/components/schemas/EmailBlueprint" }
+        }
+      },
+      "EmailBlueprint": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "folderPath", "assetTypeName", "subject", "preheader", "htmlContent"],
+        "properties": {
+          "name": { "type": "string" },
+          "folderPath": { "type": "string" },
+          "assetTypeName": { "type": "string" },
+          "subject": { "type": "string" },
+          "preheader": { "type": "string" },
+          "htmlContent": { "type": "string" },
+          "htmlContentB64": { "type": "string" },
+          "textContent": { "type": "string" },
           "ragUsed": { "type": "boolean" },
           "ragSources": { "type": "array", "items": { "$ref": "#/components/schemas/RagSource" } },
           "warnings": { "type": "array", "items": { "type": "string" } }

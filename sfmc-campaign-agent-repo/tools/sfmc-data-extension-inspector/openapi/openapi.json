@@ -1,10 +1,237 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "sfmc-data-extension-inspector",
-    "version": "0.0.1",
-    "description": "PLACEHOLDER: replace with real schema."
+    "title": "SFMC Data Extension Inspector (Dodo sandbox)",
+    "version": "1.0.0",
+    "description": "Read-only inspection of SFMC Data Extensions and Data Folders. Supports search, describe, and sampling with PII masking."
   },
-  "paths": {},
-  "components": { "schemas": {} }
+  "paths": {
+    "/searchDataExtensions": {
+      "post": {
+        "operationId": "searchDataExtensions",
+        "description": "Search Data Extensions by name queryText or exact customerKey.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SearchDataExtensionsRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SearchDataExtensionsResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "500": { "description": "Internal Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/getDataExtension": {
+      "post": {
+        "operationId": "getDataExtension",
+        "description": "Describe a Data Extension by customerKey or objectId.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DescribeDataExtensionRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DescribeDataExtensionResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "500": { "description": "Internal Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/inspectDataExtension": {
+      "post": {
+        "operationId": "inspectDataExtension",
+        "description": "Alias of getDataExtension for backward compatibility.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DescribeDataExtensionRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DescribeDataExtensionResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "500": { "description": "Internal Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/sampleDataExtensionRows": {
+      "post": {
+        "operationId": "sampleDataExtensionRows",
+        "description": "Sample a small number of rows from a Data Extension (REST Data API). PII masking is enabled by default.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SampleDataExtensionRowsRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SampleDataExtensionRowsResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "500": { "description": "Internal Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/searchDataFolders": {
+      "post": {
+        "operationId": "searchDataFolders",
+        "description": "Search Data Folders by name or list children by parentId.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SearchDataFoldersRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SearchDataFoldersResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "500": { "description": "Internal Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/describeDataFolderPath": {
+      "post": {
+        "operationId": "describeDataFolderPath",
+        "description": "Resolve a folderId to its full path by traversing parents.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DescribeDataFolderPathRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DescribeDataFolderPathResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "500": { "description": "Internal Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SearchDataExtensionsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "queryText": { "type": "string" },
+          "nameOperator": { "type": "string", "enum": ["contains", "startsWith", "equals"], "default": "contains" },
+          "customerKey": { "type": "string", "description": "Exact CustomerKey (optional)." },
+          "page": { "type": "integer", "default": 1 },
+          "pageSize": { "type": "integer", "default": 25 },
+          "fields": { "type": "array", "items": { "type": "string" }, "description": "Optional property list override for SOAP retrieve." }
+        }
+      },
+      "DescribeDataExtensionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "customerKey": { "type": "string" },
+          "objectId": { "type": "string" },
+          "includeFolderPath": { "type": "boolean", "default": true },
+          "includeFields": { "type": "boolean", "default": true }
+        },
+        "anyOf": [
+          { "required": ["customerKey"] },
+          { "required": ["objectId"] }
+        ]
+      },
+      "SampleDataExtensionRowsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["customerKey"],
+        "properties": {
+          "customerKey": { "type": "string" },
+          "pageSize": { "type": "integer", "default": 10 },
+          "columns": { "type": "array", "items": { "type": "string" } },
+          "maskPII": { "type": "boolean", "description": "Overrides default PII masking behavior." }
+        }
+      },
+      "SearchDataFoldersRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "queryText": { "type": "string" },
+          "nameOperator": { "type": "string", "enum": ["contains", "startsWith", "equals"], "default": "contains" },
+          "parentId": { "type": "integer" },
+          "contentTypes": { "type": "array", "items": { "type": "string" } },
+          "page": { "type": "integer", "default": 1 },
+          "pageSize": { "type": "integer", "default": 25 },
+          "includePath": { "type": "boolean", "default": false }
+        }
+      },
+      "DescribeDataFolderPathRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["folderId"],
+        "properties": {
+          "folderId": { "type": "integer" },
+          "maxDepth": { "type": "integer", "default": 50 }
+        }
+      },
+      "SearchDataExtensionsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ok", "output"],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "input": { "type": "object" },
+          "output": { "type": "object" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "DescribeDataExtensionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ok"],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "input": { "type": "object" },
+          "output": { "type": "object" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "SampleDataExtensionRowsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ok"],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "input": { "type": "object" },
+          "output": { "type": "object" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "SearchDataFoldersResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ok"],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "input": { "type": "object" },
+          "output": { "type": "object" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "DescribeDataFolderPathResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ok"],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "input": { "type": "object" },
+          "output": { "type": "object" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "ok": { "type": "boolean" },
+          "error": { "type": "string" }
+        }
+      }
+    }
+  }
 }

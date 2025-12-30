@@ -4,7 +4,7 @@ Dodo-only, sandbox-only email drafting tool for Salesforce Marketing Cloud (SFMC
 
 This tool:
 1) Composes a Dodo-branded email draft (subject, preheader, HTML) using optional Bedrock Knowledge Base retrieval (RAG) + a Bedrock model.
-2) Optionally creates a **draft** HTML Email asset in SFMC Content Builder using a provided `categoryId`.
+2) Emits a stable `emailBlueprint` payload for downstream tools (e.g., `sfmc-email-asset-writer`).
 
 **Region:** ap-southeast-2 (Sydney)
 
@@ -31,7 +31,12 @@ Generates:
 - `subject`
 - `preheader`
 - `html` (raw HTML or base64 depending on `returnHtmlB64`)
-- plus `ragSources` and `warnings`
+- plus `ragSources`, `warnings`, and an `emailBlueprint` object for asset creation
+
+`emailBlueprint` includes (at minimum):
+- `name`, `folderPath`, `assetTypeName`
+- `subject`, `preheader`, `htmlContent`
+- optional `textContent`, `htmlContentB64`, and warnings
 
 #### Required
 - `brand`: must be `Dodo` (case-insensitive accepted)
@@ -52,7 +57,7 @@ Generates:
 #### RAG behavior
 One of:
 - Provide `ragContext` (array of strings or `{sourceUri, excerpt}` objects). If valid, it is used **instead of** KB retrieval.
-- Otherwise, if `useKnowledgeBase` is true (default), the tool retrieves from the KB ID in `EMAIL_STYLE_KB_ID` (or override with `kbId`).
+- Otherwise, if `useKnowledgeBase=true`, the tool retrieves from the KB ID in `EMAIL_STYLE_KB_ID` (or override with `kbId`).
 
 The tool **rejects** `ragContext` entries that look like non-style metadata (reflection/XML/etc.), and falls back to KB retrieval.
 
@@ -62,9 +67,9 @@ The tool **rejects** `ragContext` entries that look like non-style metadata (ref
 
 ---
 
-### 2) POST /createEmailAsset
+### 2) POST /createEmailAsset (legacy)
 
-Creates a **draft** HTML Email asset in Content Builder.
+Creates a **draft** HTML Email asset in Content Builder. New flows should use `sfmc-email-asset-writer`.
 
 #### Required
 - `brand`: must be `Dodo`
@@ -128,7 +133,7 @@ Typical sequence for “create a draft email asset”:
 1) `sfmc-brief-normalizer` (if brief is messy)
 2) `sfmc-folder-resolver` → returns `categoryId`
 3) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`)
-4) `sfmc-email-composer` `/createEmailAsset` using that `categoryId` and `htmlContentB64`
+4) `sfmc-email-asset-writer` `/writeEmailAsset` using `emailBlueprint` + `categoryId`
 
 ---
 
