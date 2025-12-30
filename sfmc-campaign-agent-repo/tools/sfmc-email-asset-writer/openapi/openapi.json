@@ -3,13 +3,13 @@
   "info": {
     "title": "SFMC Email Asset Writer (Dodo-only)",
     "version": "1.0.0",
-    "description": "Creates draft HTML Email assets in SFMC Content Builder (sandbox only). Accepts an emailBlueprint from sfmc-email-composer and a categoryId from sfmc-folder-resolver."
+    "description": "Creates draft HTML Email assets in SFMC Content Builder (sandbox only). Accepts an emailBlueprint from sfmc-email-composer and a categoryId from sfmc-asset-search /resolveFolder."
   },
   "paths": {
     "/writeEmailAsset": {
       "post": {
         "operationId": "writeEmailAsset",
-        "description": "Create a draft HTML Email asset in SFMC Content Builder sandbox using categoryId. Use sfmc-folder-resolver to obtain categoryId.",
+        "description": "Create a draft HTML Email asset in SFMC Content Builder sandbox using categoryId. Use sfmc-asset-search /resolveFolder to obtain categoryId.",
         "requestBody": {
           "required": true,
           "content": {

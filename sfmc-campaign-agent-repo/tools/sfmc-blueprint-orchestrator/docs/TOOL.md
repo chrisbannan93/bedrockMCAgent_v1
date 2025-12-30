@@ -53,7 +53,7 @@ validateBlueprint:
 }
 
 ## Suggested downstream execution order
-1) folder-resolver (if you enforce folder IDs at build time)
+1) sfmc-asset-search /resolveFolder (if you enforce folder IDs at build time)
 2) DE schema designer → DE creator
 3) query/import designers (if needed)
 4) journey draft creator

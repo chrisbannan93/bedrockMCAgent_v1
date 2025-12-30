@@ -15,8 +15,8 @@ This tool:
 - **Sandbox only.** Never use production BUs or production credentials.
 - **Dodo only.** Requests for other brands must be rejected.
 - **Draft only.** This tool does not send, schedule, trigger, publish, or activate anything.
-- **No folderPath support.** Folder resolution/creation is handled by `sfmc-folder-resolver`.  
-  You must obtain a `categoryId` first, then call `sfmc-email-asset-writer` (preferred) or the legacy `createEmailAsset`.
+- **Folder resolution/creation is handled by `sfmc-asset-search` `/resolveFolder`.**  
+  You must obtain a `categoryId` first, then call `sfmc-email-asset-writer`.
 
 ### Sandbox enforcement (recommended)
 Set `SFMC_ALLOWED_ACCOUNT_ID` to the sandbox MID/account_id. The Lambda will refuse secrets whose `account_id` does not match.
@@ -34,7 +34,7 @@ Generates:
 - plus `ragSources`, `warnings`, and an `emailBlueprint` object for asset creation
 
 `emailBlueprint` includes (at minimum):
-- `name`, `folderPath`, `assetTypeName`
+- `name`, `folderPath` (optional), `assetTypeName`
 - `subject`, `preheader`, `htmlContent`
 - optional `textContent`, `htmlContentB64`, and warnings
 
@@ -67,38 +67,7 @@ The tool **rejects** `ragContext` entries that look like non-style metadata (ref
 
 ---
 
-### 2) POST /createEmailAsset (legacy)
-
-Creates a **draft** HTML Email asset in Content Builder. New flows should use `sfmc-email-asset-writer`.
-
-#### Required
-- `brand`: must be `Dodo`
-- `name`: asset name
-- `categoryId`: folder/category id (must be >= 1)  
-  **Must come from `sfmc-folder-resolver`**
-- `subject`
-- `preheader` (required even if empty string)
-- One of:
-  - `htmlContentB64` (preferred), OR
-  - `htmlContent` (raw)
-
-#### Notes
-- Asset type is fixed to `htmlemail` (id `208`).
-- The response includes `assetId` for internal chaining only. Avoid echoing IDs in conversational output.
-
----
-
 ## Environment variables
-
-### Required (for /createEmailAsset)
-- `SFMC_SECRET_ARN` or `SFMC_SECRET_ID`  
-  Secrets Manager JSON must include:
-  - `client_id` / `client_secret` (or `clientId` / `clientSecret`)
-  - `account_id` (recommended; required if `SFMC_ALLOWED_ACCOUNT_ID` is set)
-  - Optional base URLs:
-    - `auth_base_url` / `authBaseUrl` / `auth_url` / `authUrl`
-    - `rest_base_url` / `restBaseUrl` / `rest_url` / `restUrl`
-- `SFMC_ALLOWED_ACCOUNT_ID` (strongly recommended)
 
 ### Optional (compose/RAG/model)
 - `EMAIL_STYLE_KB_ID` (KB used when `useKnowledgeBase=true` and no `kbId` provided)
@@ -129,7 +98,7 @@ And a simple runner script:
 
 Typical sequence for “create a draft email asset”:
 1) `sfmc-brief-normalizer` (if brief is messy)
-2) `sfmc-folder-resolver` → returns `categoryId`
+2) `sfmc-asset-search` `/resolveFolder` → returns `categoryId`
 3) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`)
 4) `sfmc-email-asset-writer` `/writeEmailAsset` using `emailBlueprint` + `categoryId`
 
@@ -138,7 +107,5 @@ Typical sequence for “create a draft email asset”:
 ## Definition of done
 
 - `/composeEmail` succeeds with and without KB retrieval.
-- `/createEmailAsset` succeeds in sandbox with a known safe `categoryId`.
-- Passing `folderPath` to `/createEmailAsset` returns a clear 400 telling callers to use folder-resolver.
 - If `SFMC_ALLOWED_ACCOUNT_ID` is set, secrets with mismatched `account_id` are rejected.
 - Tool returns helpful `warnings` instead of failing when RAG retrieval is unavailable.

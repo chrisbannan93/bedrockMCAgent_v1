@@ -151,7 +151,7 @@ Minimum permissions (adjust per tool):
 
 - **Sandbox-only.** Always enforce `SFMC_ALLOWED_ACCOUNT_ID`.
 - **No sends or activation.** Draft/spec only.
-- **No guessing IDs.** Use inspectors or folder resolver.
+- **No guessing IDs.** Use inspectors or `sfmc-asset-search` `/resolveFolder`.
 - **Caps and clamps:** each tool enforces limits (e.g., `MAX_PAGE_SIZE`, sampling limits, path traversal caps).
 - **PII masking:** sample rows are masked by default in the DE inspector.
 

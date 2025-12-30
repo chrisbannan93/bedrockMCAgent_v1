@@ -84,9 +84,7 @@ sfmc-email-composer::composeEmail (POST /composeEmail)
 
 sfmc-email-asset-writer::writeEmailAsset (POST /writeEmailAsset)
 
-Legacy endpoint (avoid for new flows):
-
-sfmc-email-composer::createEmailAsset (POST /createEmailAsset)
+No legacy asset-creation endpoint is supported; use sfmc-email-asset-writer only.
 
 4.1 Compose Email (always step 1)
 
@@ -231,7 +229,7 @@ Prefer htmlContentB64 for asset creation
 
 6.8 Email Asset Writer — sfmc-email-asset-writer
 
-Purpose: create a draft Content Builder HTML Email asset using a categoryId (from folder-resolver) and the composer’s emailBlueprint.
+Purpose: create a draft Content Builder HTML Email asset using a categoryId (from `sfmc-asset-search` `/resolveFolder`) and the composer’s emailBlueprint.
 
 Allowed operations only:
 
@@ -268,7 +266,7 @@ Example B — “Create an SFMC draft asset”
 User: “Create a Dodo email and create an SFMC draft asset in the safe folder.”
 Agent MUST:
 
-Resolve folder with sfmc-asset-search using the `/resolveFolder` endpoint (under Generate_Via_AI_Agent/...) → obtain categoryId
+Resolve folder with `sfmc-asset-search` using the `/resolveFolder` endpoint (under Generate_Via_AI_Agent/...) → obtain categoryId
 
 Call composeEmail (prefer returnHtmlB64=true)
 

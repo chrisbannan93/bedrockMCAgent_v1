@@ -42,7 +42,7 @@
           "502": { "description": "Upstream Error" }
         }
       }
-    },
+    }
   },
   "components": {
     "schemas": {
@@ -94,7 +94,7 @@
             }
           }
         ]
-      },
+      }
     }
   }
 }
