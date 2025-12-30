@@ -1,16 +1,19 @@
 {
   "messageVersion": "1.0",
   "actionGroup": "sfmc-category-path-inspector",
-  "apiPath": "/getCategoryPath",
-  "httpMethod": "POST",
-  "requestBody": {
-    "content": {
-      "application/json": {
-        "properties": [
-          { "name": "categoryId", "type": "integer", "value": "123456" },
-          { "name": "limitRootCategoryId", "type": "integer", "value": "789000" },
-          { "name": "maxDepth", "type": "integer", "value": "50" }
-        ]
+  "actionGroupInvocationInput": {
+    "actionGroupName": "sfmc-category-path-inspector",
+    "apiPath": "/getCategoryPath",
+    "httpMethod": "POST",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "body": {
+            "categoryId": 123456,
+            "limitRootCategoryId": 789000,
+            "maxDepth": 50
+          }
+        }
       }
     }
   }

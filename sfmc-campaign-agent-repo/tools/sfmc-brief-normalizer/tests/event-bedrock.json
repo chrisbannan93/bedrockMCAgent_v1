@@ -2,13 +2,18 @@
   "messageVersion": "1.0",
   "actionGroup": "sfmc-brief-normalizer",
   "actionGroupInvocationInput": {
+    "actionGroupName": "sfmc-brief-normalizer",
     "apiPath": "/normalizeBrief",
-    "verb": "POST",
-    "parameters": [],
+    "httpMethod": "POST",
     "requestBody": {
       "content": {
         "application/json": {
-          "body": "{\"rawBrief\":\"...\",\"context\":{\"brand\":\"Dodo\"}}"
+          "body": {
+            "rawBrief": "...",
+            "context": {
+              "brand": "Dodo"
+            }
+          }
         }
       }
     }

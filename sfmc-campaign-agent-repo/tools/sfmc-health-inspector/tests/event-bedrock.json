@@ -4,15 +4,15 @@
   "actionGroupInvocationInput": {
     "actionGroupName": "sfmc-health-inspector",
     "apiPath": "/healthreport",
-    "verb": "POST",
+    "httpMethod": "POST",
     "requestBody": {
       "content": {
         "application/json": {
-          "properties": [
-            { "name": "mode", "type": "string", "value": "quick" },
-            { "name": "includeRestProbes", "type": "boolean", "value": "false" },
-            { "name": "includeSoapProbe", "type": "boolean", "value": "false" }
-          ]
+          "body": {
+            "mode": "quick",
+            "includeRestProbes": false,
+            "includeSoapProbe": false
+          }
         }
       }
     }

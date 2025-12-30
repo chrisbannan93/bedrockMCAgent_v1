@@ -4,7 +4,7 @@
   "actionGroupInvocationInput": {
     "actionGroupName": "sfmc-automation-inspector",
     "apiPath": "/searchAutomations",
-    "verb": "POST",
+    "httpMethod": "POST",
     "requestBody": {
       "content": {
         "application/json": {

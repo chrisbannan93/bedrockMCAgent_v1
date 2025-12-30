@@ -4,7 +4,7 @@
   "actionGroupInvocationInput": {
     "actionGroupName": "sfmc-blueprint-orchestrator",
     "apiPath": "/generateBlueprint",
-    "verb": "POST",
+    "httpMethod": "POST",
     "requestBody": {
       "content": {
         "application/json": {
