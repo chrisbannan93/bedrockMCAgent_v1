@@ -3,7 +3,6 @@
 Enabled:
 - sfmc-health-inspector
 - sfmc-brief-normalizer
-- sfmc-folder-resolver
 - sfmc-category-path-inspector
 - sfmc-asset-search
 - sfmc-data-extension-inspector

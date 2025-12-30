@@ -1,5 +1,0 @@
-{
-  "path": "/resolveFolder",
-  "httpMethod": "POST",
-  "body": "{\"folderPath\":\"Generate_Via_AI_Agent/Email/Examples\",\"createIfMissing\":true,\"assetFamily\":\"content-builder\"}"
-}

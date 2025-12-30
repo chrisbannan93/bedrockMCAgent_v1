@@ -1,0 +1,13 @@
+{
+  "messageVersion": "1.0",
+  "actionGroup": "sfmc-asset-search",
+  "apiPath": "/resolveFolder",
+  "httpMethod": "POST",
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "body": "{\"folderPath\":\"Journeys/NBN/Activation\",\"createIfMissing\":true}"
+      }
+    }
+  }
+}
