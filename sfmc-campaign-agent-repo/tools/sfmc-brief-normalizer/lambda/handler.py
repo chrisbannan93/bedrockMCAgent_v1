@@ -438,7 +438,14 @@ def lambda_handler(event, context):
         path = _get_api_path(event)
         body_in = event.get("body")
         try:
-            params = json.loads(body_in) if isinstance(body_in, str) else (body_in or {})
+            if isinstance(body_in, str):
+                params = json.loads(body_in)
+            elif isinstance(body_in, dict):
+                params = body_in
+            elif body_in is None:
+                params = event
+            else:
+                params = {}
         except Exception:
             params = {}
 
