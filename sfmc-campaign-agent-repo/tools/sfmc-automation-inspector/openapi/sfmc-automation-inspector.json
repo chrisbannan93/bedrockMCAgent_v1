@@ -1,0 +1,221 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "sfmc-automation-inspector",
+    "version": "1.2.0",
+    "description": "Read-only sandbox tool to inspect SFMC Automation Studio: search/describe Automations, Query Activities, Import Activities. Summary-first outputs with optional includeRaw. Supports optional includeSchedule for scheduled automations when schedule metadata is exposed by the API."
+  },
+  "paths": {
+    "/searchAutomations": {
+      "post": {
+        "operationId": "searchAutomations",
+        "description": "Search Automation Studio automations by name (contains/startsWith/equals). Summary-only by default; set includeRaw=true to return itemsRaw.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["queryText"],
+                "properties": {
+                  "queryText": { "type": "string" },
+                  "nameOperator": {
+                    "type": "string",
+                    "enum": ["contains", "startswith", "equals"],
+                    "default": "contains"
+                  },
+                  "statusCodes": { "type": "array", "items": { "type": "integer" } },
+                  "page": { "type": "integer", "default": 1 },
+                  "pageSize": { "type": "integer", "default": 25 },
+                  "includeRaw": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/describeAutomation": {
+      "post": {
+        "operationId": "describeAutomation",
+        "description": "Describe an automation by id. Returns automation summary and optional schedule/task/activity detail. includeRaw adds automationRaw and per-activity raw (when fetched).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "includeSchedule": { "type": "boolean", "default": false },
+                  "includeTaskSummary": { "type": "boolean", "default": true },
+                  "includeActivityDetails": { "type": "boolean", "default": false },
+                  "activityDetailsMax": { "type": "integer", "default": 20 },
+                  "includeRaw": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/automationSummary": {
+      "post": {
+        "operationId": "automationSummary",
+        "description": "One-call summary for an automation: header + schedule (optional) + tasks, with optional activity details (query/import). Summary-first; includeRaw optionally.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "includeSchedule": { "type": "boolean", "default": false },
+                  "includeActivityDetails": { "type": "boolean", "default": false },
+                  "activityDetailsMax": { "type": "integer", "default": 20 },
+                  "includeRaw": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/searchQueryActivities": {
+      "post": {
+        "operationId": "searchQueryActivities",
+        "description": "Search Automation Studio Query Activities by name. Summary-only by default; includeRaw=true adds itemsRaw.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["queryText"],
+                "properties": {
+                  "queryText": { "type": "string" },
+                  "nameOperator": {
+                    "type": "string",
+                    "enum": ["contains", "startswith", "equals"],
+                    "default": "contains"
+                  },
+                  "page": { "type": "integer", "default": 1 },
+                  "pageSize": { "type": "integer", "default": 25 },
+                  "includeRaw": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/describeQueryActivity": {
+      "post": {
+        "operationId": "describeQueryActivity",
+        "description": "Describe a Query Activity by id. Returns query summary; includeRaw=true adds queryRaw.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "includeRaw": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/searchImportActivities": {
+      "post": {
+        "operationId": "searchImportActivities",
+        "description": "Search Automation Studio Import Activities by name. Summary-only by default; includeRaw=true adds itemsRaw.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["queryText"],
+                "properties": {
+                  "queryText": { "type": "string" },
+                  "nameOperator": {
+                    "type": "string",
+                    "enum": ["contains", "startswith", "equals"],
+                    "default": "contains"
+                  },
+                  "page": { "type": "integer", "default": 1 },
+                  "pageSize": { "type": "integer", "default": 25 },
+                  "includeRaw": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/describeImportActivity": {
+      "post": {
+        "operationId": "describeImportActivity",
+        "description": "Describe an Import Activity by id. Returns import summary; includeRaw=true adds importRaw.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "includeRaw": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    }
+  }
+}

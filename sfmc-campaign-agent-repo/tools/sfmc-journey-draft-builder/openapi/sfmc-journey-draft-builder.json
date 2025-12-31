@@ -1,0 +1,182 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SFMC Journey Draft Builder",
+    "version": "0.1.0",
+    "description": "Generates + validates a Journey Spec payload and (optionally) creates a Draft Journey in SFMC sandbox via POST /interaction/v1/interactions. Defaults to dryRun=true. Read-only unless createInSfmc=true AND dryRun=false."
+  },
+  "paths": {
+    "/journeydraft": {
+      "post": {
+        "operationId": "journeyDraftBuild",
+        "description": "Validate and return a Journey Spec payload. Optionally POST to SFMC to create a Draft Journey when createInSfmc=true and dryRun=false.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/JourneyDraftRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Draft built (and maybe created).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/JourneyDraftResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input or guardrail blocked create.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "502": {
+            "description": "SFMC create call failed.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Unhandled error.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/draft": {
+      "post": {
+        "operationId": "journeyDraftBuildAlias",
+        "description": "Alias of /journeydraft (POST).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/JourneyDraftRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JourneyDraftResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "502": { "description": "SFMC create failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "500": { "description": "Unhandled", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "healthz",
+        "description": "Lightweight liveness + config guardrail check (no SFMC calls).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthzResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "JourneyDraftRequest": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "createInSfmc": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, tool will attempt to create a draft journey in SFMC (requires dryRun=false)."
+          },
+          "dryRun": {
+            "type": "boolean",
+            "default": true,
+            "description": "If true, tool will NOT call SFMC; it will only return the payload + validation."
+          },
+          "forceTokenRefresh": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, clears warm Lambda token cache before fetching OAuth token."
+          },
+          "journeySpec": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Preferred: full Journey Spec object (minimum required for create: key,name,workflowApiVersion,triggers,activities)."
+          },
+          "spec": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Alias of journeySpec."
+          },
+          "key": { "type": "string", "description": "If journeySpec not supplied, can provide top-level key." },
+          "name": { "type": "string", "description": "If journeySpec not supplied, can provide top-level name." },
+          "description": { "type": "string" },
+          "workflowApiVersion": { "type": "string", "description": "Typically '1.0'." },
+          "triggers": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "activities": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "goals": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+        }
+      },
+      "JourneyDraftResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "toolVersion": { "type": "string" },
+          "outputSchemaVersion": { "type": "string" },
+          "timestampUtc": { "type": "string" },
+          "sfmcEnv": { "type": ["string", "null"] },
+          "runtime": { "type": "object", "additionalProperties": true },
+          "requestedInputs": { "type": "object", "additionalProperties": true },
+          "effectiveInputs": { "type": "object", "additionalProperties": true },
+          "validation": { "type": "object", "additionalProperties": true },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "journeySpec": { "type": "object", "additionalProperties": true },
+          "createAttempted": { "type": "boolean" },
+          "sfmcCreateResult": { "type": ["object", "null"], "additionalProperties": true },
+          "evidence": { "type": "object", "additionalProperties": true },
+          "timings": { "type": "object", "additionalProperties": true },
+          "hints": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["ok", "tool", "journeySpec"]
+      },
+      "HealthzResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "toolVersion": { "type": "string" },
+          "outputSchemaVersion": { "type": "string" },
+          "runtime": { "type": "object", "additionalProperties": true },
+          "healthzOk": { "type": "boolean" }
+        },
+        "required": ["ok", "tool", "toolVersion", "outputSchemaVersion", "healthzOk"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "ok": { "type": "boolean" },
+          "error": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}

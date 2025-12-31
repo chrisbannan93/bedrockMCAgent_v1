@@ -1,0 +1,133 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SFMC Email Asset Writer (Dodo-only)",
+    "version": "1.0.0",
+    "description": "Creates draft HTML Email assets in SFMC Content Builder (sandbox only). Accepts an emailBlueprint from sfmc-email-composer and a categoryId from sfmc-asset-search /resolveFolder."
+  },
+  "paths": {
+    "/writeEmailAsset": {
+      "post": {
+        "operationId": "writeEmailAsset",
+        "description": "Create a draft HTML Email asset in SFMC Content Builder sandbox using categoryId. Use sfmc-asset-search /resolveFolder to obtain categoryId.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WriteEmailAssetRequest" },
+              "examples": {
+                "from_blueprint": {
+                  "summary": "Create asset from composer blueprint",
+                  "value": {
+                    "brand": "Dodo",
+                    "categoryId": 123456,
+                    "emailBlueprint": {
+                      "name": "AGENT_TEST_Email_01",
+                      "folderPath": "Generate_Via_AI_Agent/Comms",
+                      "assetTypeName": "htmlemail",
+                      "subject": "Your Dodo bill is due soon",
+                      "preheader": "Pay online in minutes",
+                      "htmlContent": "<html><body>...</body></html>"
+                    }
+                  }
+                },
+                "from_direct_fields": {
+                  "summary": "Create asset from direct fields",
+                  "value": {
+                    "brand": "Dodo",
+                    "name": "AGENT_TEST_Email_02",
+                    "categoryId": 123456,
+                    "subject": "Planned maintenance this weekend",
+                    "preheader": "",
+                    "htmlContentB64": "PGh0bWw+Li4uPC9odG1sPg=="
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset created",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WriteEmailAssetResponse" } } }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "502": {
+            "description": "SFMC dependency failed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EmailBlueprint": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "folderPath", "assetTypeName", "subject", "preheader", "htmlContent"],
+        "properties": {
+          "name": { "type": "string" },
+          "folderPath": { "type": "string" },
+          "assetTypeName": { "type": "string", "default": "htmlemail" },
+          "subject": { "type": "string" },
+          "preheader": { "type": "string" },
+          "htmlContent": { "type": "string" },
+          "htmlContentB64": { "type": "string" },
+          "textContent": { "type": "string" }
+        }
+      },
+      "WriteEmailAssetRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["categoryId"],
+        "properties": {
+          "brand": { "type": "string", "default": "Dodo" },
+          "categoryId": { "type": "integer", "minimum": 1 },
+          "emailBlueprint": { "$ref": "#/components/schemas/EmailBlueprint" },
+          "name": { "type": "string" },
+          "assetName": { "type": "string", "description": "Alias for name." },
+          "folderPath": { "type": "string" },
+          "assetTypeName": { "type": "string" },
+          "subject": { "type": "string" },
+          "preheader": { "type": "string" },
+          "htmlContent": { "type": "string" },
+          "htmlContentB64": { "type": "string" },
+          "textContent": { "type": "string" }
+        },
+        "oneOf": [
+          { "required": ["emailBlueprint"] },
+          { "required": ["name", "subject", "preheader"] }
+        ]
+      },
+      "WriteEmailAssetResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["created", "categoryId", "warnings"],
+        "properties": {
+          "created": { "type": "boolean" },
+          "categoryId": { "type": "integer" },
+          "assetId": { "type": "string", "description": "Returned for internal chaining; do not echo in chat." },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "created": { "type": "boolean" },
+          "error": { "type": "string" },
+          "message": { "type": "string" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

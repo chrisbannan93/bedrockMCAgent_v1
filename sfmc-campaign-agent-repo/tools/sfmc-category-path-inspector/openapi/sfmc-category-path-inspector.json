@@ -1,0 +1,85 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SFMC Category Path Inspector",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/getCategoryPath": {
+      "post": {
+        "operationId": "getCategoryPath",
+        "description": "Given a SFMC categoryId, returns the full Content Builder folder path and segments.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "categoryId": {
+                    "type": "integer",
+                    "description": "Category ID from asset.category.id"
+                  },
+                  "limitRootCategoryId": {
+                    "type": "integer",
+                    "description": "Optional top-most category to treat as the root for fromRootPathNames."
+                  },
+                  "maxDepth": {
+                    "type": "integer",
+                    "description": "Max number of parent hops to walk (default 50)."
+                  }
+                },
+                "required": ["categoryId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful category path resolution.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "tool": { "type": "string" },
+                    "input": { "type": "object" },
+                    "output": {
+                      "type": "object",
+                      "properties": {
+                        "segmentsRootToLeaf": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "integer" },
+                              "name": { "type": "string" },
+                              "parentId": { "type": "integer" }
+                            }
+                          }
+                        },
+                        "fullPathNames": { "type": "string" },
+                        "fromRootPathNames": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "rootCategoryId": { "type": "integer" },
+                        "rootCategoryName": { "type": "string" }
+                      }
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

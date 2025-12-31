@@ -37,7 +37,7 @@ Bedrock Agent
 
 Each tool has:
 - `lambda/handler.py` (Bedrock + direct invoke support)
-- `openapi/openapi.json`
+- `openapi/<tool-name>.json`
 - `docs/TOOL.md`
 - `tests/` sample events
 - `env.example`
@@ -105,7 +105,7 @@ Minimum permissions (adjust per tool):
 
 ### 4) Create Bedrock Action Group
 
-- Register the tool’s `openapi/openapi.json` as the Action Group schema
+- Register the tool’s `openapi/<tool-name>.json` as the Action Group schema
 - Connect the Action Group to the corresponding Lambda
 
 ---

@@ -1,0 +1,556 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SFMC Health Inspector",
+    "version": "1.3.3",
+    "description": "Read-only sandbox health checks for SFMC connectivity/auth/endpoint reachability. Supports POST body and GET query-param invocation. Includes warm-token-cache behavior and lightweight REST/SOAP probes. Accepts a small set of input aliases (includeRestProbe/includeRest/includeSoap)."
+  },
+  "paths": {
+    "/healthreport": {
+      "post": {
+        "operationId": "healthReport",
+        "description": "Run a compact health report (no deep discovery).",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/HealthReportRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Health report produced.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthReportResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input / unknown path / unsupported method.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error producing report.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "healthReportGet",
+        "description": "Run a compact health report via query params (GET). Query params override any parsed body (if present).",
+        "parameters": [
+          { "$ref": "#/components/parameters/mode" },
+          { "$ref": "#/components/parameters/includeRestProbes" },
+          { "$ref": "#/components/parameters/includeRestProbe" },
+          { "$ref": "#/components/parameters/includeRest" },
+          { "$ref": "#/components/parameters/includeSoapProbe" },
+          { "$ref": "#/components/parameters/includeSoap" },
+          { "$ref": "#/components/parameters/forceTokenRefresh" },
+          { "$ref": "#/components/parameters/forceAuthRefresh" },
+          { "$ref": "#/components/parameters/simulateColdStart" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Health report produced.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthReportResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input / unknown path / unsupported method.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error producing report.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "post": {
+        "operationId": "healthReportAliasPost",
+        "description": "Alias of /healthreport (POST).",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/HealthReportRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Health report produced.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthReportResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input / unknown path / unsupported method.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error producing report.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "healthReportAliasGet",
+        "description": "Alias of /healthreport (GET).",
+        "parameters": [
+          { "$ref": "#/components/parameters/mode" },
+          { "$ref": "#/components/parameters/includeRestProbes" },
+          { "$ref": "#/components/parameters/includeRestProbe" },
+          { "$ref": "#/components/parameters/includeRest" },
+          { "$ref": "#/components/parameters/includeSoapProbe" },
+          { "$ref": "#/components/parameters/includeSoap" },
+          { "$ref": "#/components/parameters/forceTokenRefresh" },
+          { "$ref": "#/components/parameters/forceAuthRefresh" },
+          { "$ref": "#/components/parameters/simulateColdStart" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Health report produced.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthReportResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input / unknown path / unsupported method.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error producing report.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report": {
+      "post": {
+        "operationId": "healthReportReportAliasPost",
+        "description": "Alias of /healthreport (POST).",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/HealthReportRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Health report produced.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthReportResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input / unknown path / unsupported method.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error producing report.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "healthReportReportAliasGet",
+        "description": "Alias of /healthreport (GET).",
+        "parameters": [
+          { "$ref": "#/components/parameters/mode" },
+          { "$ref": "#/components/parameters/includeRestProbes" },
+          { "$ref": "#/components/parameters/includeRestProbe" },
+          { "$ref": "#/components/parameters/includeRest" },
+          { "$ref": "#/components/parameters/includeSoapProbe" },
+          { "$ref": "#/components/parameters/includeSoap" },
+          { "$ref": "#/components/parameters/forceTokenRefresh" },
+          { "$ref": "#/components/parameters/forceAuthRefresh" },
+          { "$ref": "#/components/parameters/simulateColdStart" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Health report produced.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthReportResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input / unknown path / unsupported method.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error producing report.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "healthz",
+        "description": "Lightweight liveness + config presence check (no SFMC calls).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthzResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "mode": {
+        "name": "mode",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "string", "enum": ["quick", "configonly", "coldstart"], "default": "quick" },
+        "description": "quick = config+secrets+auth+small probes; configonly = no SFMC calls; coldstart = like quick but forces a fresh OAuth token fetch"
+      },
+      "includeRestProbes": {
+        "name": "includeRestProbes",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean", "default": true },
+        "description": "If true, runs lightweight REST endpoint probes (automation + journey)."
+      },
+      "includeRestProbe": {
+        "name": "includeRestProbe",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean" },
+        "description": "Alias of includeRestProbes."
+      },
+      "includeRest": {
+        "name": "includeRest",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean" },
+        "description": "Alias of includeRestProbes."
+      },
+      "includeSoapProbe": {
+        "name": "includeSoapProbe",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean", "default": true },
+        "description": "If true, runs lightweight SOAP probe against DataExtension retrieve (safe name filter)."
+      },
+      "includeSoap": {
+        "name": "includeSoap",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean" },
+        "description": "Alias of includeSoapProbe."
+      },
+      "forceTokenRefresh": {
+        "name": "forceTokenRefresh",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean", "default": false },
+        "description": "If true, clears warm Lambda token cache and fetches a new OAuth token (simulates cold start auth behavior)."
+      },
+      "forceAuthRefresh": {
+        "name": "forceAuthRefresh",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean", "default": false },
+        "description": "Alias of forceTokenRefresh."
+      },
+      "simulateColdStart": {
+        "name": "simulateColdStart",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean", "default": false },
+        "description": "Alias of forceTokenRefresh."
+      }
+    },
+    "schemas": {
+      "HealthReportRequest": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "description": "quick = config+secrets+auth+small probes; configonly = no SFMC calls; coldstart = like quick but forces a fresh OAuth token fetch",
+            "enum": ["quick", "configonly", "coldstart"],
+            "default": "quick"
+          },
+          "includeRestProbes": {
+            "type": "boolean",
+            "description": "If true, runs lightweight REST endpoint probes (automation + journey).",
+            "default": true
+          },
+          "includeRestProbe": {
+            "type": "boolean",
+            "description": "Alias of includeRestProbes."
+          },
+          "includeRest": {
+            "type": "boolean",
+            "description": "Alias of includeRestProbes."
+          },
+          "includeSoapProbe": {
+            "type": "boolean",
+            "description": "If true, runs lightweight SOAP probe against DataExtension retrieve (safe name filter).",
+            "default": true
+          },
+          "includeSoap": {
+            "type": "boolean",
+            "description": "Alias of includeSoapProbe."
+          },
+          "forceTokenRefresh": {
+            "type": "boolean",
+            "description": "If true, clears warm Lambda token cache and fetches a new OAuth token (simulates cold start auth behavior).",
+            "default": false
+          },
+          "forceAuthRefresh": {
+            "type": "boolean",
+            "description": "Alias of forceTokenRefresh.",
+            "default": false
+          },
+          "simulateColdStart": {
+            "type": "boolean",
+            "description": "Alias of forceTokenRefresh.",
+            "default": false
+          }
+        }
+      },
+      "HealthReportResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "input": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Echo of parsed inputs (may be redacted/truncated depending on runtime)."
+          },
+          "output": { "$ref": "#/components/schemas/HealthReport" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["ok", "tool", "output"]
+      },
+      "HealthReport": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "tool": { "type": "string" },
+          "toolVersion": { "type": "string" },
+          "outputSchemaVersion": { "type": "string", "description": "Version of the output payload schema emitted by the Lambda." },
+          "overallStatus": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] },
+          "healthOk": { "type": "boolean", "description": "Convenience boolean (true if overallStatus == PASS)." },
+          "timestampUtc": { "type": "string", "description": "UTC timestamp of report generation." },
+          "sfmcEnv": { "type": ["string", "null"] },
+          "sandboxSignals": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SandboxSignal" }
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Non-sensitive evidence to help diagnose configuration (hosts, accountId, cache hints, etc.).",
+            "properties": {
+              "authHost": { "type": "string" },
+              "restHost": { "type": "string" },
+              "soapHost": { "type": "string" },
+              "accountId": { "type": "string" }
+            }
+          },
+          "requestedInputs": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Raw inputs received by the tool (after parsing Bedrock action-group parameters/body)."
+          },
+          "effectiveInputs": {
+            "type": "object",
+            "description": "The actual settings used after applying defaults/aliases/coercions.",
+            "properties": {
+              "mode": { "type": "string" },
+              "includeRestProbes": { "type": "boolean" },
+              "includeSoapProbe": { "type": "boolean" },
+              "forceTokenRefresh": { "type": "boolean" }
+            },
+            "additionalProperties": true
+          },
+          "skippedChecks": {
+            "type": "array",
+            "description": "If any checks were SKIP, this lists them with reasons.",
+            "items": { "$ref": "#/components/schemas/SkippedCheck" }
+          },
+          "checksSummary": { "$ref": "#/components/schemas/ChecksSummary" },
+          "checks": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/HealthCheck" }
+          },
+          "timings": { "$ref": "#/components/schemas/Timings" }
+        },
+        "required": ["overallStatus", "checks", "timestampUtc", "tool", "toolVersion", "outputSchemaVersion"]
+      },
+      "ChecksSummary": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "counts": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "PASS": { "type": "integer" },
+              "FAIL": { "type": "integer" },
+              "WARN": { "type": "integer" },
+              "SKIP": { "type": "integer" }
+            }
+          },
+          "failedChecks": { "type": "array", "items": { "type": "string" } },
+          "warnChecks": { "type": "array", "items": { "type": "string" } },
+          "skippedChecks": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "SkippedCheck": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["name", "reason"]
+      },
+      "HealthCheck": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "status": { "type": "string", "enum": ["PASS", "WARN", "FAIL", "SKIP"] },
+          "durationMs": { "type": "integer" },
+          "details": { "type": "object", "additionalProperties": true },
+          "hints": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["name", "status"]
+      },
+      "SandboxSignal": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "signal": { "type": "string" },
+          "value": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["high", "medium", "low"] }
+        },
+        "required": ["signal", "confidence"]
+      },
+      "Timings": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "totalMs": { "type": "integer" }
+        }
+      },
+      "HealthzResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "toolVersion": { "type": "string" },
+          "outputSchemaVersion": { "type": "string" },
+          "sfmcEnv": { "type": ["string", "null"] },
+          "requiredEnvPresent": { "type": "boolean" },
+          "missingEnv": { "type": "array", "items": { "type": "string" } },
+          "sandboxGuardrailOk": { "type": "boolean" },
+          "requiredSandboxValue": { "type": "string" },
+          "hostSuffixGuardrailEnforced": { "type": "boolean" },
+          "hostSuffixAllowlist": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["ok", "requiredEnvPresent", "tool", "toolVersion", "outputSchemaVersion"]
+      },
+      "SupportedPaths": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "GET": { "type": "array", "items": { "type": "string" } },
+          "POST": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "ok": { "type": "boolean" },
+          "tool": { "type": "string" },
+          "toolVersion": { "type": "string" },
+          "outputSchemaVersion": { "type": "string" },
+          "error": { "type": "string" },
+          "message": { "type": "string" },
+          "supported": { "$ref": "#/components/schemas/SupportedPaths" }
+        },
+        "required": ["ok", "tool", "toolVersion", "outputSchemaVersion", "error", "message"]
+      }
+    }
+  }
+}
