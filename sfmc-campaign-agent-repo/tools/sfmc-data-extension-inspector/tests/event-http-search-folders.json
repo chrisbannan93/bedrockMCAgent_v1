@@ -1,5 +1,5 @@
 {
   "httpMethod": "POST",
-  "path": "/searchDataExtensions",
+  "path": "/searchDataFolders",
   "body": "{\\"queryText\\":\\"Test\\"}"
 }

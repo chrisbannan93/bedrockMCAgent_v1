@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "path": "/journeyTopology",
+  "body": "{\\"idOrKey\\":\\"12345\\"}"
+}

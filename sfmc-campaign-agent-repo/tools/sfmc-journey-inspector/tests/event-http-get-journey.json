@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "path": "/getJourney",
+  "body": "{\\"idOrKey\\":\\"12345\\"}"
+}

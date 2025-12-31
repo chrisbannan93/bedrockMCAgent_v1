@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "path": "/resolveFolder",
+  "body": "{\\"folderPath\\":\\"Test/Folder\\"}"
+}

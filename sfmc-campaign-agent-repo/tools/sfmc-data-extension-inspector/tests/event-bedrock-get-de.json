@@ -6,10 +6,10 @@
     "alias": "JulesAlias",
     "version": "1"
   },
-  "inputText": "Compose an email...",
+  "inputText": "Get the data extension with customer key 'test-key'",
   "sessionId": "SESSION456",
-  "actionGroup": "sfmc-email-composer",
-  "apiPath": "/composeEmail",
+  "actionGroup": "sfmc-data-extension-inspector",
+  "apiPath": "/getDataExtension",
   "httpMethod": "POST",
   "parameters": [],
   "requestBody": {
@@ -17,14 +17,9 @@
       "application/json": {
         "properties": [
           {
-            "name": "brand",
+            "name": "customerKey",
             "type": "string",
-            "value": "Dodo"
-          },
-          {
-            "name": "brief",
-            "type": "string",
-            "value": "A simple test email"
+            "value": "test-key"
           }
         ]
       }

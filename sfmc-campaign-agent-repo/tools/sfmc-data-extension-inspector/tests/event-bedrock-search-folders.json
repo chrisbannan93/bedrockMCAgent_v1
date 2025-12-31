@@ -6,10 +6,10 @@
     "alias": "JulesAlias",
     "version": "1"
   },
-  "inputText": "Compose an email...",
+  "inputText": "Search for data folders with 'Test' in the name",
   "sessionId": "SESSION456",
-  "actionGroup": "sfmc-email-composer",
-  "apiPath": "/composeEmail",
+  "actionGroup": "sfmc-data-extension-inspector",
+  "apiPath": "/searchDataFolders",
   "httpMethod": "POST",
   "parameters": [],
   "requestBody": {
@@ -17,14 +17,9 @@
       "application/json": {
         "properties": [
           {
-            "name": "brand",
+            "name": "queryText",
             "type": "string",
-            "value": "Dodo"
-          },
-          {
-            "name": "brief",
-            "type": "string",
-            "value": "A simple test email"
+            "value": "Test"
           }
         ]
       }

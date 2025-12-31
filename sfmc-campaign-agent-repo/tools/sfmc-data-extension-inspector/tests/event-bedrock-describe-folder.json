@@ -6,10 +6,10 @@
     "alias": "JulesAlias",
     "version": "1"
   },
-  "inputText": "Compose an email...",
+  "inputText": "Describe the data folder with ID 12345",
   "sessionId": "SESSION456",
-  "actionGroup": "sfmc-email-composer",
-  "apiPath": "/composeEmail",
+  "actionGroup": "sfmc-data-extension-inspector",
+  "apiPath": "/describeDataFolderPath",
   "httpMethod": "POST",
   "parameters": [],
   "requestBody": {
@@ -17,14 +17,9 @@
       "application/json": {
         "properties": [
           {
-            "name": "brand",
-            "type": "string",
-            "value": "Dodo"
-          },
-          {
-            "name": "brief",
-            "type": "string",
-            "value": "A simple test email"
+            "name": "folderId",
+            "type": "integer",
+            "value": "12345"
           }
         ]
       }

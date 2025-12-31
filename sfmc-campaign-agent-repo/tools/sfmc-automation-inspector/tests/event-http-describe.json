@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "path": "/describeAutomation",
+  "body": "{\\"id\\":\\"12345\\"}"
+}

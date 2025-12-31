@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "path": "/getDataExtension",
+  "body": "{\\"customerKey\\":\\"test-key\\"}"
+}
