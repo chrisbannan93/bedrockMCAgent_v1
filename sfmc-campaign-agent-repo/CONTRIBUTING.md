@@ -7,7 +7,7 @@
 
 ## What to update per tool
 - `lambda/handler.py` (or equivalent)
-- `openapi/openapi.json`
+- `openapi/<tool-name>.json`
 - `docs/TOOL.md`
 - `tests/*.json`
 - `env.example`

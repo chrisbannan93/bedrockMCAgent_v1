@@ -1,0 +1,170 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "SFMC Email Composer (Dodo-only)",
+    "version": "1.1.0",
+    "description": "Composes Dodo SFMC sandbox email drafts (subject, preheader, HTML) using optional Bedrock KB RAG + model."
+  },
+  "paths": {
+    "/composeEmail": {
+      "post": {
+        "operationId": "composeEmail",
+        "description": "Generate subject, preheader, and HTML for a Dodo email using optional KB RAG or provided ragContext.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ComposeEmailRequest" },
+              "examples": {
+                "base64_html": {
+                  "summary": "Compose email and return HTML as base64",
+                  "value": {
+                    "brand": "Dodo",
+                    "brief": "Remind customers their bill is due soon and how to pay online.",
+                    "ctaText": "Pay my bill",
+                    "ctaUrl": "https://www.dodo.com",
+                    "returnHtmlB64": true
+                  }
+                },
+                "normalized_brief_only": {
+                  "summary": "Compose using normalizedBrief (no brief string)",
+                  "value": {
+                    "brand": "Dodo",
+                    "normalizedBrief": { "campaignType": "Billing", "message": "Bill due reminder" },
+                    "returnHtmlB64": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email content generated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ComposeEmailResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "500": {
+            "description": "Writer output invalid or internal failure",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "502": {
+            "description": "Model invocation or upstream dependency failed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RagContextItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["excerpt"],
+        "properties": {
+          "sourceUri": { "type": "string", "description": "Optional identifier for the snippet source." },
+          "excerpt": { "type": "string", "description": "The style snippet text to apply." }
+        }
+      },
+      "RagSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sourceUri": { "type": "string" },
+          "score": { "type": "number" },
+          "excerpt": { "type": "string" }
+        }
+      },
+      "ComposeEmailRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["brand"],
+        "anyOf": [
+          { "required": ["brief"] },
+          { "required": ["normalizedBrief"] }
+        ],
+        "properties": {
+          "brand": { "type": "string", "description": "Must be Dodo (case-insensitive supported).", "default": "Dodo" },
+          "brief": { "type": "string", "description": "Campaign brief / request text." },
+          "normalizedBrief": { "type": "object", "description": "Normalized brief object (alternative to brief)." },
+          "tone": { "type": "string" },
+          "cta": { "type": "string", "description": "Alias for ctaText (agent-friendly)." },
+          "ctaText": { "type": "string" },
+          "ctaUrl": { "type": "string" },
+          "emailGoal": { "type": "string" },
+          "audienceSummary": { "type": "string" },
+          "requiredLinks": { "type": "array", "items": { "type": "string" } },
+          "useKnowledgeBase": { "type": "boolean", "description": "If true, enables KB retrieval inside the Lambda. Prefer agent-native KB attachment when possible.", "default": false },
+          "kbId": { "type": "string", "description": "Knowledge Base ID override." },
+          "ragContext": {
+            "type": "array",
+            "description": "Optional pre-retrieved style snippets. If provided, used instead of KB retrieve. Do not include reflection/metadata/XML.",
+            "items": { "oneOf": [{ "type": "string" }, { "$ref": "#/components/schemas/RagContextItem" }] }
+          },
+          "ragResults": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5 },
+          "modelId": { "type": "string", "description": "Optional Bedrock modelId override." },
+          "maxTokens": { "type": "integer", "minimum": 200, "maximum": 4000, "default": 1800 },
+          "temperature": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.4 },
+          "returnHtmlB64": { "type": "boolean", "default": false },
+          "personalizationTokens": { "type": "array", "items": { "type": "string" } },
+          "requiredBlocks": { "type": "array", "items": { "type": "string" } },
+          "assetName": { "type": "string", "description": "Optional asset name to include in emailBlueprint." },
+          "name": { "type": "string", "description": "Alias for assetName." },
+          "folderPath": { "type": "string", "description": "Optional folder path to include in emailBlueprint (used downstream by asset writer)."},
+          "assetTypeName": { "type": "string", "description": "Optional asset type name for blueprint. Defaults to htmlemail." }
+        }
+      },
+      "ComposeEmailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["brand", "subject", "preheader", "html", "htmlIsB64", "ragUsed", "ragSources", "warnings", "emailBlueprint"],
+        "properties": {
+          "brand": { "type": "string" },
+          "subject": { "type": "string" },
+          "preheader": { "type": "string" },
+          "html": { "type": "string", "description": "HTML string (or base64 if htmlIsB64=true)" },
+          "htmlIsB64": { "type": "boolean" },
+          "ragUsed": { "type": "boolean" },
+          "ragSources": { "type": "array", "items": { "$ref": "#/components/schemas/RagSource" } },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "emailBlueprint": { "$ref": "#/components/schemas/EmailBlueprint" }
+        }
+      },
+      "EmailBlueprint": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "folderPath", "assetTypeName", "subject", "preheader", "htmlContent"],
+        "properties": {
+          "name": { "type": "string" },
+          "folderPath": { "type": "string" },
+          "assetTypeName": { "type": "string" },
+          "subject": { "type": "string" },
+          "preheader": { "type": "string" },
+          "htmlContent": { "type": "string" },
+          "htmlContentB64": { "type": "string" },
+          "textContent": { "type": "string" },
+          "ragUsed": { "type": "boolean" },
+          "ragSources": { "type": "array", "items": { "$ref": "#/components/schemas/RagSource" } },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "error": { "type": "string" },
+          "errorType": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}
