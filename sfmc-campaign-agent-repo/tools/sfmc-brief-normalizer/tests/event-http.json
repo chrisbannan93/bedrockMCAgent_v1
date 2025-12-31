@@ -1,5 +1,5 @@
 {
   "path": "/normalizeBrief",
   "httpMethod": "POST",
-  "body": "{\"rawBrief\":\"Launch a billing reminder email for Dodo customers due this week. Emphasize online payment.\"}"
+  "body": "{\"rawBrief\":\"Send a reminder about scheduled internet maintenance this weekend.\"}"
 }

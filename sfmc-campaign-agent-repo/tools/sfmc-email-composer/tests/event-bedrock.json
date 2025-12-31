@@ -6,7 +6,7 @@
     "alias": "JulesAlias",
     "version": "1"
   },
-  "inputText": "Compose an email...",
+  "inputText": "Compose an email about new internet plans.",
   "sessionId": "SESSION456",
   "actionGroup": "sfmc-email-composer",
   "apiPath": "/composeEmail",
@@ -19,12 +19,12 @@
           {
             "name": "brand",
             "type": "string",
-            "value": "Dodo"
+            "value": "InternetCo"
           },
           {
             "name": "brief",
             "type": "string",
-            "value": "A simple test email"
+            "value": "Draft a short email announcing faster internet plans."
           }
         ]
       }

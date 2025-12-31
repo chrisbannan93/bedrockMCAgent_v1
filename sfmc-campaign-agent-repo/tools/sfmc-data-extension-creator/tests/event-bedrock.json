@@ -9,9 +9,9 @@
       "content": {
         "application/json": {
           "body": {
-            "name": "AI_Test_DE_01",
-            "customerKey": "AI_Test_DE_01",
-            "folderPath": "Generate_Via_AI_Agent/DataExtensions/AgentTests",
+            "name": "internet_subscribers",
+            "customerKey": "internet_subscribers",
+            "folderPath": "Generate_Via_AI_Agent/DataExtensions/Internet",
             "allowCreateMissingFolders": true,
             "dryRun": true,
             "fields": [
@@ -26,7 +26,12 @@
                 "type": "EmailAddress"
               },
               {
-                "name": "CreatedAt",
+                "name": "PlanName",
+                "type": "Text",
+                "maxLength": 100
+              },
+              {
+                "name": "SignupDate",
                 "type": "Date"
               }
             ]

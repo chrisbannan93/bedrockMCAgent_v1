@@ -9,7 +9,7 @@
       "content": {
         "application/json": {
           "body": {
-            "customerKey": "AGENT_TEST_DE_01",
+            "customerKey": "internet_subscribers",
             "includeFolderPath": true,
             "includeFields": true
           }

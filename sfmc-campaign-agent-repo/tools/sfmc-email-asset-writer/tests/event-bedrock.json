@@ -6,7 +6,7 @@
     "alias": "JulesAlias",
     "version": "1"
   },
-  "inputText": "Create an email asset",
+  "inputText": "Create an internet plan update email asset",
   "sessionId": "SESSION456",
   "actionGroup": "sfmc-email-asset-writer",
   "apiPath": "/writeEmailAsset",
@@ -24,22 +24,22 @@
           {
             "name": "name",
             "type": "string",
-            "value": "Test Email"
+            "value": "Internet Plan Update"
           },
           {
             "name": "subject",
             "type": "string",
-            "value": "Test Subject"
+            "value": "Your internet plan update"
           },
           {
             "name": "preheader",
             "type": "string",
-            "value": "Test Preheader"
+            "value": "Faster speeds are here"
           },
           {
             "name": "htmlContent",
             "type": "string",
-            "value": "<html><body><h1>Test</h1></body></html>"
+            "value": "<html><body><h1>Internet Plan Update</h1><p>Discover our latest internet options.</p></body></html>"
           }
         ]
       }

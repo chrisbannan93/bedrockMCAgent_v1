@@ -3,8 +3,8 @@
   "createInSfmc": false,
   "journeySpec": {
     "key": "11111111-2222-4333-8444-555555555555",
-    "name": "AGENT_TEST_JOURNEY_01",
-    "description": "Draft-only payload generation test",
+    "name": "INTERNET_WELCOME_JOURNEY",
+    "description": "Draft welcome journey for internet subscribers",
     "workflowApiVersion": "1.0",
     "triggers": [],
     "activities": []

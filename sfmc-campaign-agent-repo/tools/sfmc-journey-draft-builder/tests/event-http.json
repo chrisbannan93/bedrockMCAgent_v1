@@ -1,5 +1,5 @@
 {
   "path": "/journeydraft",
   "httpMethod": "POST",
-  "body": "{\"createInSfmc\":false,\"dryRun\":true,\"journeySpec\":{\"key\":\"00000000-0000-0000-0000-000000000001\",\"name\":\"Agent Test Journey 01\",\"workflowApiVersion\":1,\"triggers\":[{\"type\":\"Event\",\"key\":\"TRIGGER_1\",\"name\":\"Data Extension Entry\",\"arguments\":{}}],\"activities\":[{\"type\":\"WAIT\",\"name\":\"Wait 1 day\",\"key\":\"WAIT_1\",\"arguments\":{\"waitDuration\":1,\"waitUnit\":\"DAYS\"}}]}}"
+  "body": "{\"createInSfmc\":false,\"dryRun\":true,\"journeySpec\":{\"key\":\"00000000-0000-0000-0000-000000000001\",\"name\":\"Internet Welcome Journey\",\"workflowApiVersion\":1,\"triggers\":[{\"type\":\"Event\",\"key\":\"TRIGGER_1\",\"name\":\"Internet Subscribers Entry\",\"arguments\":{}}],\"activities\":[{\"type\":\"WAIT\",\"name\":\"Wait 1 day\",\"key\":\"WAIT_1\",\"arguments\":{\"waitDuration\":1,\"waitUnit\":\"DAYS\"}}]}}"
 }

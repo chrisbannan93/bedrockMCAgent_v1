@@ -6,7 +6,7 @@
     "alias": "JulesAlias",
     "version": "1"
   },
-  "inputText": "Search for journeys with 'Test' in the name",
+  "inputText": "Search for journeys with 'internet' in the name",
   "sessionId": "SESSION456",
   "actionGroup": "sfmc-journey-inspector",
   "apiPath": "/searchJourneys",
@@ -19,7 +19,7 @@
           {
             "name": "nameOrDescription",
             "type": "string",
-            "value": "Test"
+            "value": "internet"
           }
         ]
       }
