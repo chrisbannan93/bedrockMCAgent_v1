@@ -1,22 +1,35 @@
 {
   "messageVersion": "1.0",
+  "agent": {
+    "name": "Jules",
+    "id": "AGENT123",
+    "alias": "JulesAlias",
+    "version": "1"
+  },
+  "inputText": "Compose an email...",
+  "sessionId": "SESSION456",
   "actionGroup": "sfmc-email-composer",
-  "actionGroupInvocationInput": {
-    "actionGroupName": "sfmc-email-composer",
-    "apiPath": "/composeEmail",
-    "httpMethod": "POST",
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "body": {
-            "brand": "Dodo",
-            "brief": "Remind customers their bill is due soon and how to pay online.",
-            "assetName": "AGENT_TEST_Email_01",
-            "folderPath": "Generate_Via_AI_Agent/Email/Examples",
-            "returnHtmlB64": true
+  "apiPath": "/composeEmail",
+  "httpMethod": "POST",
+  "parameters": [],
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "properties": [
+          {
+            "name": "brand",
+            "type": "string",
+            "value": "Dodo"
+          },
+          {
+            "name": "brief",
+            "type": "string",
+            "value": "A simple test email"
           }
-        }
+        ]
       }
     }
-  }
+  },
+  "sessionAttributes": {},
+  "promptSessionAttributes": {}
 }

@@ -1,5 +1,5 @@
 {
-  "path": "/searchDataExtensions",
   "httpMethod": "POST",
-  "body": "{\"queryText\":\"Agent\",\"nameOperator\":\"contains\",\"page\":1,\"pageSize\":10}"
+  "path": "/searchDataExtensions",
+  "body": "{\\"queryText\\":\\"Test\\"}"
 }

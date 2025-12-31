@@ -1,5 +1,5 @@
 {
-  "path": "/searchJourneys",
   "httpMethod": "POST",
-  "body": "{\"nameOrDescription\":\"Billing\",\"page\":1,\"pageSize\":5}"
+  "path": "/searchJourneys",
+  "body": "{\\"nameOrDescription\\":\\"Test\\"}"
 }

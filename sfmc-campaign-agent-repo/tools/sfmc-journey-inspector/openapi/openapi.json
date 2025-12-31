@@ -17,39 +17,45 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "nameOrDescription": { "type": "string" },
-                  "status": { "type": "string" },
-                  "id": { "type": "string", "description": "If provided, searches by journey id. Some SFMC tenants return all versions for an id." },
-                  "key": { "type": "string", "description": "If provided, searches by journey key." },
-                  "mostRecentVersionOnly": { "type": "boolean", "default": true },
-                  "extras": {
-                    "type": "string",
-                    "description": "Optional extras hint (e.g., 'activities', 'stats', 'outcome'). Backend may restrict or ignore."
-                  },
-                  "page": { "type": "integer", "minimum": 1, "default": 1 },
-                  "pageSize": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 999,
-                    "default": 25,
-                    "description": "Requested pageSize. Backend clamps to API max and safety limits."
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/components/schemas/SearchJourneysRequest"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Journey search results" },
-          "400": { "description": "Bad request" },
-          "500": { "description": "Internal error" }
+          "200": {
+            "description": "Journey search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchJourneysResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
-
     "/getJourney": {
       "post": {
         "summary": "Get a journey by id or key (Journey Builder REST)",
@@ -61,37 +67,55 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["idOrKey"],
-                "properties": {
-                  "idOrKey": {
-                    "type": "string",
-                    "description": "Journey id (GUID) OR 'key:<journeyKey>'"
-                  },
-                  "versionNumber": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Optional versionNumber."
-                  },
-                  "extras": {
-                    "type": "string",
-                    "description": "Optional extras hint (e.g., 'activities', 'stats', 'outcome'). Backend may restrict or ignore."
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/components/schemas/GetJourneyRequest"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Journey detail" },
-          "404": { "description": "Not found" },
-          "400": { "description": "Bad request" },
-          "500": { "description": "Internal error" }
+          "200": {
+            "description": "Journey detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetJourneyResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
-
     "/listJourneyVersions": {
       "post": {
         "summary": "List journey versions (derived from search results)",
@@ -103,35 +127,55 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["idOrKey"],
-                "properties": {
-                  "idOrKey": {
-                    "type": "string",
-                    "description": "Journey id (GUID) OR 'key:<journeyKey>'"
-                  },
-                  "pageSize": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 999,
-                    "default": 50,
-                    "description": "Requested pageSize for underlying search. Backend clamps."
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/components/schemas/ListJourneyVersionsRequest"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Journey versions list" },
-          "404": { "description": "Not found" },
-          "400": { "description": "Bad request" },
-          "500": { "description": "Internal error" }
+          "200": {
+            "description": "Journey versions list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListJourneyVersionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
-
     "/getJourneyAuditLog": {
       "post": {
         "summary": "Get journey audit log (Journey Builder REST)",
@@ -143,41 +187,55 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["idOrKey"],
-                "properties": {
-                  "idOrKey": {
-                    "type": "string",
-                    "description": "Journey id (GUID) OR 'key:<journeyKey>'"
-                  },
-                  "action": {
-                    "type": "string",
-                    "enum": ["all", "create", "modify", "activate", "deactivate", "stop", "delete"],
-                    "default": "all"
-                  },
-                  "page": { "type": "integer", "minimum": 1, "default": 1 },
-                  "pageSize": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 999,
-                    "default": 50,
-                    "description": "Requested pageSize. Backend clamps."
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/components/schemas/GetJourneyAuditLogRequest"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Audit log" },
-          "404": { "description": "Not found" },
-          "400": { "description": "Bad request" },
-          "500": { "description": "Internal error" }
+          "200": {
+            "description": "Audit log",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetJourneyAuditLogResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
-
     "/summarizeJourney": {
       "post": {
         "summary": "Summarize a journey (activities/triggers overview)",
@@ -189,31 +247,55 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["idOrKey"],
-                "properties": {
-                  "idOrKey": { "type": "string", "description": "Journey id (GUID) OR 'key:<journeyKey>'" },
-                  "versionNumber": { "type": "integer", "minimum": 1 },
-                  "extras": {
-                    "type": "string",
-                    "default": "activities",
-                    "description": "Optional extras hint; backend will generally need 'activities' to summarize."
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/components/schemas/SummarizeJourneyRequest"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Journey summary" },
-          "404": { "description": "Not found" },
-          "400": { "description": "Bad request" },
-          "500": { "description": "Internal error" }
+          "200": {
+            "description": "Journey summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummarizeJourneyResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
-
     "/journeyTopology": {
       "post": {
         "summary": "Build a journey topology graph (nodes + edges)",
@@ -225,39 +307,384 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["idOrKey"],
-                "properties": {
-                  "idOrKey": { "type": "string", "description": "Journey id (GUID) OR 'key:<journeyKey>'" },
-                  "versionNumber": { "type": "integer", "minimum": 1 },
-                  "extras": {
-                    "type": "string",
-                    "default": "activities",
-                    "description": "Optional extras hint; backend will generally need 'activities' to build topology."
-                  },
-                  "maxNodes": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 5000,
-                    "description": "Requested max nodes. Backend clamps to TOPOLOGY_MAX_NODES."
-                  },
-                  "maxEdges": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 20000,
-                    "description": "Requested max edges. Backend clamps to TOPOLOGY_MAX_EDGES."
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/components/schemas/JourneyTopologyRequest"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Journey topology graph" },
-          "404": { "description": "Not found" },
-          "400": { "description": "Bad request" },
-          "500": { "description": "Internal error" }
+          "200": {
+            "description": "Journey topology graph",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyTopologyResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SearchJourneysRequest": {
+        "type": "object",
+        "properties": {
+          "nameOrDescription": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "description": "If provided, searches by journey id. Some SFMC tenants return all versions for an id."
+          },
+          "key": {
+            "type": "string",
+            "description": "If provided, searches by journey key."
+          },
+          "mostRecentVersionOnly": {
+            "type": "boolean",
+            "default": true
+          },
+          "extras": {
+            "type": "string",
+            "description": "Optional extras hint (e.g., 'activities', 'stats', 'outcome'). Backend may restrict or ignore."
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999,
+            "default": 25,
+            "description": "Requested pageSize. Backend clamps to API max and safety limits."
+          }
+        },
+        "additionalProperties": false
+      },
+      "SearchJourneysResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "input": {
+            "type": "object"
+          },
+          "output": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GetJourneyRequest": {
+        "type": "object",
+        "required": [
+          "idOrKey"
+        ],
+        "properties": {
+          "idOrKey": {
+            "type": "string",
+            "description": "Journey id (GUID) OR 'key:<journeyKey>'"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optional versionNumber."
+          },
+          "extras": {
+            "type": "string",
+            "description": "Optional extras hint (e.g., 'activities', 'stats', 'outcome'). Backend may restrict or ignore."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetJourneyResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "input": {
+            "type": "object"
+          },
+          "output": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ListJourneyVersionsRequest": {
+        "type": "object",
+        "required": [
+          "idOrKey"
+        ],
+        "properties": {
+          "idOrKey": {
+            "type": "string",
+            "description": "Journey id (GUID) OR 'key:<journeyKey>'"
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999,
+            "default": 50,
+            "description": "Requested pageSize for underlying search. Backend clamps."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListJourneyVersionsResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "input": {
+            "type": "object"
+          },
+          "output": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GetJourneyAuditLogRequest": {
+        "type": "object",
+        "required": [
+          "idOrKey"
+        ],
+        "properties": {
+          "idOrKey": {
+            "type": "string",
+            "description": "Journey id (GUID) OR 'key:<journeyKey>'"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "all",
+              "create",
+              "modify",
+              "activate",
+              "deactivate",
+              "stop",
+              "delete"
+            ],
+            "default": "all"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999,
+            "default": 50,
+            "description": "Requested pageSize. Backend clamps."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetJourneyAuditLogResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "input": {
+            "type": "object"
+          },
+          "output": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SummarizeJourneyRequest": {
+        "type": "object",
+        "required": [
+          "idOrKey"
+        ],
+        "properties": {
+          "idOrKey": {
+            "type": "string",
+            "description": "Journey id (GUID) OR 'key:<journeyKey>'"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "extras": {
+            "type": "string",
+            "default": "activities",
+            "description": "Optional extras hint; backend will generally need 'activities' to summarize."
+          }
+        },
+        "additionalProperties": false
+      },
+      "SummarizeJourneyResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "input": {
+            "type": "object"
+          },
+          "output": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "JourneyTopologyRequest": {
+        "type": "object",
+        "required": [
+          "idOrKey"
+        ],
+        "properties": {
+          "idOrKey": {
+            "type": "string",
+            "description": "Journey id (GUID) OR 'key:<journeyKey>'"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "extras": {
+            "type": "string",
+            "default": "activities",
+            "description": "Optional extras hint; backend will generally need 'activities' to build topology."
+          },
+          "maxNodes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
+            "description": "Requested max nodes. Backend clamps to TOPOLOGY_MAX_NODES."
+          },
+          "maxEdges": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20000,
+            "description": "Requested max edges. Backend clamps to TOPOLOGY_MAX_EDGES."
+          }
+        },
+        "additionalProperties": false
+      },
+      "JourneyTopologyResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "input": {
+            "type": "object"
+          },
+          "output": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
         }
       }
     }
