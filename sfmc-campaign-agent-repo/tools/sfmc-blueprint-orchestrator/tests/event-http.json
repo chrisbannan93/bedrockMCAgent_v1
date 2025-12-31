@@ -1,5 +1,5 @@
 {
   "path": "/generateBlueprint",
   "httpMethod": "POST",
-  "body": "{\"campaignName\":\"Agent Test Campaign\",\"brief\":\"Launch a billing reminder email for Dodo customers due this week.\",\"channels\":[\"email\"],\"includeRationale\":true}"
+  "body": "{\"campaignName\":\"Internet Launch Campaign\",\"brief\":\"Announce new internet plan options and highlight faster speeds.\",\"channels\":[\"email\"],\"includeRationale\":true}"
 }

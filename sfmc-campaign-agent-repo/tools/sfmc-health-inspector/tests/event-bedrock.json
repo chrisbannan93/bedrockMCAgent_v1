@@ -10,7 +10,7 @@
         "application/json": {
           "body": {
             "mode": "quick",
-            "includeRestProbes": false,
+            "includeRestProbes": true,
             "includeSoapProbe": false
           }
         }

@@ -6,7 +6,7 @@
   "requestBody": {
     "content": {
       "application/json": {
-        "body": "{\"folderPath\":\"Journeys/NBN/Activation\",\"createIfMissing\":true}"
+        "body": "{\"folderPath\":\"Assets/Internet\",\"createIfMissing\":true}"
       }
     }
   }

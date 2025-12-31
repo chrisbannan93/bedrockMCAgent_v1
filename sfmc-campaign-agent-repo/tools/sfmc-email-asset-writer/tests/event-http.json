@@ -1,5 +1,5 @@
 {
   "httpMethod": "POST",
   "path": "/writeEmailAsset",
-  "body": "{\\"categoryId\\": 12345, \\"name\\": \\"Test Email\\", \\"subject\\": \\"Test Subject\\", \\"preheader\\": \\"Test Preheader\\", \\"htmlContent\\": \\"<html><body><h1>Test</h1></body></html>\\"}"
+  "body": "{\"categoryId\": 12345, \"name\": \"Internet Plan Update\", \"subject\": \"Your internet plan update\", \"preheader\": \"Faster speeds are here\", \"htmlContent\": \"<html><body><h1>Internet Plan Update</h1><p>Discover our latest internet options.</p></body></html>\"}"
 }

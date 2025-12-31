@@ -9,7 +9,7 @@
       "content": {
         "application/json": {
           "body": {
-            "queryText": "Activation",
+            "queryText": "internet",
             "nameOperator": "contains"
           }
         }

@@ -1,5 +1,5 @@
 {
   "path": "/searchAssets",
   "httpMethod": "POST",
-  "body": "{\"queryText\":\"Welcome\",\"nameOperator\":\"like\",\"page\":1,\"pageSize\":5}"
+  "body": "{\"queryText\":\"internet\",\"nameOperator\":\"contains\",\"page\":1,\"pageSize\":5}"
 }

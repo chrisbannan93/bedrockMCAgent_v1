@@ -1,5 +1,5 @@
 {
   "httpMethod": "POST",
   "path": "/searchJourneys",
-  "body": "{\\"nameOrDescription\\":\\"Test\\"}"
+  "body": "{\"nameOrDescription\":\"internet\"}"
 }

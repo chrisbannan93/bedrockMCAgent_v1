@@ -1,5 +1,5 @@
 {
   "path": "/searchAutomations",
   "httpMethod": "POST",
-  "body": "{\"queryText\":\"Audience\",\"nameOperator\":\"contains\",\"page\":1,\"pageSize\":10}"
+  "body": "{\"queryText\":\"internet\",\"nameOperator\":\"contains\",\"page\":1,\"pageSize\":10}"
 }

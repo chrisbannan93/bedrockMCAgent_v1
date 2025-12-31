@@ -9,9 +9,9 @@
       "content": {
         "application/json": {
           "body": {
-            "categoryId": 123456,
-            "limitRootCategoryId": 789000,
-            "maxDepth": 50
+            "categoryId": 10101,
+            "limitRootCategoryId": 10000,
+            "maxDepth": 5
           }
         }
       }

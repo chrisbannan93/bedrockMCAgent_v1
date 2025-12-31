@@ -1,5 +1,5 @@
 {
   "path": "/healthreport",
   "httpMethod": "POST",
-  "body": "{\"mode\":\"quick\",\"includeRestProbes\":false,\"includeSoapProbe\":false}"
+  "body": "{\"mode\":\"quick\",\"includeRestProbes\":true,\"includeSoapProbe\":false}"
 }

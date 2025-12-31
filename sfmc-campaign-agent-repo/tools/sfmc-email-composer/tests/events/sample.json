@@ -1,5 +1,5 @@
 {
   "path": "/composeEmail",
   "httpMethod": "POST",
-  "body": "{\"brand\":\"Dodo\",\"brief\":\"Reminder email for customers with bills due soon.\",\"returnHtmlB64\":true}"
+  "body": "{\"brand\":\"InternetCo\",\"brief\":\"Reminder email for customers about upcoming internet plan changes.\",\"returnHtmlB64\":true}"
 }

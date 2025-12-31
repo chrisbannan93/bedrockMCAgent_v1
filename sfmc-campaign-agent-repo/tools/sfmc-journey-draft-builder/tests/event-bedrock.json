@@ -13,13 +13,13 @@
             "dryRun": true,
             "journeySpec": {
               "key": "00000000-0000-0000-0000-000000000001",
-              "name": "Agent Test Journey 01",
+              "name": "Internet Welcome Journey",
               "workflowApiVersion": 1,
               "triggers": [
                 {
                   "type": "Event",
                   "key": "TRIGGER_1",
-                  "name": "Data Extension Entry",
+                  "name": "Internet Subscribers Entry",
                   "arguments": {}
                 }
               ],

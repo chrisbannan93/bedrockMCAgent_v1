@@ -9,9 +9,9 @@
       "content": {
         "application/json": {
           "body": {
-            "rawBrief": "...",
+            "rawBrief": "Send a reminder about scheduled internet maintenance this weekend.",
             "context": {
-              "brand": "Dodo"
+              "brand": "InternetCo"
             }
           }
         }

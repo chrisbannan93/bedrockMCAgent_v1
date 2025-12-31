@@ -1,4 +1,4 @@
 {
   "rawPath": "/searchJourneys",
-  "body": "{\"nameOrDescription\":\"Activation\",\"mostRecentVersionOnly\":true,\"page\":1,\"pageSize\":25}"
+  "body": "{\"nameOrDescription\":\"internet\",\"mostRecentVersionOnly\":true,\"page\":1,\"pageSize\":25}"
 }

@@ -1,5 +1,5 @@
 {
   "path": "/getCategoryPath",
   "httpMethod": "POST",
-  "body": "{\"categoryId\":123456,\"maxDepth\":20}"
+  "body": "{\"categoryId\":10101,\"maxDepth\":5}"
 }

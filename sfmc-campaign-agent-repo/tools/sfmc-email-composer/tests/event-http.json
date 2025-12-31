@@ -1,5 +1,5 @@
 {
   "httpMethod": "POST",
   "path": "/composeEmail",
-  "body": "{\\"brand\\":\\"Dodo\\",\\"brief\\":\\"A simple test email\\"}"
+  "body": "{\"brand\":\"InternetCo\",\"brief\":\"Draft a short email announcing faster internet plans.\"}"
 }

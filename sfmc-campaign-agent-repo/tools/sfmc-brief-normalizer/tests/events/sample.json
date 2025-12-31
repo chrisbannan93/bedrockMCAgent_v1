@@ -1,4 +1,4 @@
 {
-  "rawBrief": "Launch an upgrade comms campaign for fibre customers...",
-  "context": { "brand": "Dodo", "env": "sandbox" }
+  "rawBrief": "Launch an internet upgrade announcement for residential customers.",
+  "context": { "brand": "InternetCo", "env": "sandbox" }
 }
