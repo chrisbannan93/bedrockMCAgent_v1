@@ -612,18 +612,18 @@ def _normalize_wait_unit(value: Any, warnings: List[str]) -> Any:
     if not key:
         return value
     mapping = {
-        "minutes": "Minutes",
-        "minute": "Minutes",
-        "mins": "Minutes",
-        "min": "Minutes",
-        "hours": "Hours",
-        "hour": "Hours",
-        "hrs": "Hours",
-        "hr": "Hours",
-        "days": "Days",
-        "day": "Days",
-        "weeks": "Weeks",
-        "week": "Weeks",
+        "minutes": "MINUTES",
+        "minute": "MINUTES",
+        "mins": "MINUTES",
+        "min": "MINUTES",
+        "hours": "HOURS",
+        "hour": "HOURS",
+        "hrs": "HOURS",
+        "hr": "HOURS",
+        "days": "DAYS",
+        "day": "DAYS",
+        "weeks": "WEEKS",
+        "week": "WEEKS",
     }
     mapped = mapping.get(key)
     if mapped and mapped != value:
@@ -645,21 +645,28 @@ def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) 
         warnings.append(f"Ignored non-object configurationArguments for {label}.")
 
     if cfg_dict is None and args_dict is not None:
-        item["configurationArguments"] = args_dict
-        item.pop("arguments", None)
-        warnings.append(f"Promoted {label} arguments to configurationArguments.")
+        item["configurationArguments"] = dict(args_dict)
+        item["arguments"] = dict(args_dict)
+        warnings.append(f"Copied {label} arguments to configurationArguments.")
         return
 
     if cfg_dict is not None and args_dict is not None:
         merged = dict(args_dict)
         merged.update(cfg_dict)
-        item["configurationArguments"] = merged
-        item.pop("arguments", None)
+        item["arguments"] = dict(merged)
+        item["configurationArguments"] = dict(merged)
         warnings.append(f"Merged {label} arguments into configurationArguments.")
+        return
+
+    if cfg_dict is not None and args_dict is None:
+        item["configurationArguments"] = dict(cfg_dict)
+        item["arguments"] = dict(cfg_dict)
+        warnings.append(f"Copied {label} configurationArguments to arguments.")
         return
 
     if cfg_dict is None:
         item["configurationArguments"] = {}
+        item["arguments"] = {}
 
 
 def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
@@ -674,11 +681,11 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
         "event": "Event",
     }
     activity_type_map = {
-        "wait": "Wait",
-        "email": "Email",
-        "emailv2": "EmailV2",
-        "engagementsplit": "EngagementSplit",
-        "updatecontact": "UpdateContact",
+        "wait": "WAIT",
+        "email": "EMAIL",
+        "emailv2": "EMAILV2",
+        "engagementsplit": "ENGAGEMENTSPLIT",
+        "updatecontact": "UPDATECONTACT",
     }
 
     triggers = spec.get("triggers")
