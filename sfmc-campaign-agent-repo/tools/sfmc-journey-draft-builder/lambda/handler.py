@@ -626,7 +626,7 @@ def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
                 continue
             outcomes = trigger.get("outcomes")
             if not isinstance(outcomes, list) or not outcomes:
-                trigger["outcomes"] = [{"next": activity_keys[0], "arguments": {}, "metaData": {}}]
+                trigger["outcomes"] = [{"next": activity_keys[0]}]
                 warnings.append("Added default trigger outcome to first activity.")
 
     for idx, activity in enumerate(activities):
@@ -637,7 +637,7 @@ def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
             continue
         next_key = activity_keys[idx + 1] if idx + 1 < len(activity_keys) else None
         if next_key:
-            activity["outcomes"] = [{"next": next_key, "arguments": {}, "metaData": {}}]
+            activity["outcomes"] = [{"next": next_key}]
             warnings.append(
                 f"Added default outcome from activity '{activity.get('key')}' to '{next_key}'."
             )
@@ -645,68 +645,6 @@ def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
             activity["outcomes"] = []
             warnings.append(f"Added empty outcomes for terminal activity '{activity.get('key')}'.")
 
-    return spec
-
-
-def _normalize_activity_fields(spec: dict, warnings: List[str]) -> dict:
-    if not isinstance(spec, dict):
-        return spec
-
-    def ensure_dict_field(container: dict, field: str, label: str) -> None:
-        value = container.get(field)
-        if value is None:
-            container[field] = {}
-            warnings.append(f"Added default {label} {field}.")
-            return
-        if not isinstance(value, dict):
-            container[field] = {}
-            warnings.append(f"Replaced non-object {label} {field} with empty object.")
-
-    def normalize_outcomes(container: dict, label: str) -> None:
-        outcomes = container.get("outcomes")
-        if outcomes is None:
-            return
-        if not isinstance(outcomes, list):
-            container["outcomes"] = []
-            warnings.append(f"Replaced non-array {label} outcomes with empty list.")
-            return
-        for outcome in outcomes:
-            if not isinstance(outcome, dict):
-                continue
-            ensure_dict_field(outcome, "arguments", f"{label} outcome")
-            ensure_dict_field(outcome, "metaData", f"{label} outcome")
-
-    triggers = spec.get("triggers")
-    if isinstance(triggers, list):
-        for trigger in triggers:
-            if not isinstance(trigger, dict):
-                continue
-            ensure_dict_field(trigger, "arguments", "trigger")
-            ensure_dict_field(trigger, "metaData", "trigger")
-            normalize_outcomes(trigger, "trigger")
-
-    activities = spec.get("activities")
-    if isinstance(activities, list):
-        for activity in activities:
-            if not isinstance(activity, dict):
-                continue
-            ensure_dict_field(activity, "arguments", "activity")
-            ensure_dict_field(activity, "metaData", "activity")
-            normalize_outcomes(activity, "activity")
-
-    return spec
-
-
-def _coerce_workflow_version(spec: dict, warnings: List[str]) -> dict:
-    if not isinstance(spec, dict):
-        return spec
-    version = spec.get("workflowApiVersion")
-    if isinstance(version, str):
-        try:
-            spec["workflowApiVersion"] = float(version)
-            warnings.append("Coerced workflowApiVersion string to number.")
-        except ValueError:
-            pass
     return spec
 
 
@@ -726,8 +664,6 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
         pruned, w = _prune_server_fields(js)
         warnings.extend(w)
         pruned = _ensure_default_outcomes(pruned, warnings)
-        pruned = _normalize_activity_fields(pruned, warnings)
-        pruned = _coerce_workflow_version(pruned, warnings)
         return pruned, warnings
 
     # Alias: "spec"
@@ -736,8 +672,6 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
         pruned, w = _prune_server_fields(js2)
         warnings.extend(w)
         pruned = _ensure_default_outcomes(pruned, warnings)
-        pruned = _normalize_activity_fields(pruned, warnings)
-        pruned = _coerce_workflow_version(pruned, warnings)
         return pruned, warnings
 
     # Build from top-level fields
@@ -752,8 +686,6 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     pruned, w = _prune_server_fields(spec)
     warnings.extend(w)
     pruned = _ensure_default_outcomes(pruned, warnings)
-    pruned = _normalize_activity_fields(pruned, warnings)
-    pruned = _coerce_workflow_version(pruned, warnings)
     return pruned, warnings
 
 
