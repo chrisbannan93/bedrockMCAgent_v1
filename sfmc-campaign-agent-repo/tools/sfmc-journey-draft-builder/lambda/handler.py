@@ -677,6 +677,14 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
         spec["workflowApiVersion"] = str(spec.get("workflowApiVersion"))
         warnings.append("Coerced workflowApiVersion to string.")
 
+    if not spec.get("definitionType"):
+        spec["definitionType"] = "Multistep"
+        warnings.append("Added default definitionType 'Multistep'.")
+
+    if not spec.get("entryMode"):
+        spec["entryMode"] = "SingleEntryAcrossAllVersions"
+        warnings.append("Added default entryMode 'SingleEntryAcrossAllVersions'.")
+
     trigger_type_map = {
         "event": "Event",
     }
@@ -697,8 +705,12 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
             if not trigger.get("key"):
                 trigger["key"] = f"TRIGGER_{idx}"
                 warnings.append(f"Added missing trigger key 'TRIGGER_{idx}'.")
+            if not trigger.get("name"):
+                trigger["name"] = trigger.get("key")
+                warnings.append(f"Added missing trigger name '{trigger.get('name')}'.")
             trigger["type"] = _normalize_type(trigger.get("type"), trigger_type_map, warnings, "trigger")
             _merge_configuration_arguments(trigger, warnings, f"trigger '{trigger.get('key')}'")
+            _normalize_trigger_configuration(trigger, warnings)
 
     activities = spec.get("activities")
     if isinstance(activities, list):
@@ -709,12 +721,17 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
             if not activity.get("key"):
                 activity["key"] = f"ACTIVITY_{idx}"
                 warnings.append(f"Added missing activity key 'ACTIVITY_{idx}'.")
+            if not activity.get("name"):
+                activity["name"] = activity.get("key")
+                warnings.append(f"Added missing activity name '{activity.get('name')}'.")
             activity["type"] = _normalize_type(activity.get("type"), activity_type_map, warnings, "activity")
             _merge_configuration_arguments(activity, warnings, f"activity '{activity.get('key')}'")
 
             cfg = activity.get("configurationArguments")
             if isinstance(cfg, dict) and "waitUnit" in cfg:
                 cfg["waitUnit"] = _normalize_wait_unit(cfg.get("waitUnit"), warnings)
+
+            _normalize_activity_configuration(activity, warnings)
 
     return spec
 
@@ -773,6 +790,98 @@ def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
             warnings.append(f"Added empty outcomes for terminal activity '{activity.get('key')}'.")
 
     return spec
+
+
+def _coerce_int(value: Any) -> Optional[int]:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    try:
+        return int(str(value).strip())
+    except Exception:
+        return None
+
+
+def _normalize_trigger_configuration(trigger: dict, warnings: List[str]) -> None:
+    cfg = trigger.get("configurationArguments")
+    if not isinstance(cfg, dict):
+        return
+    if "eventDefinitionKey" not in cfg:
+        legacy = trigger.get("eventDefinitionKey") or trigger.get("eventDefinitionId")
+        if legacy:
+            cfg["eventDefinitionKey"] = legacy
+            trigger["arguments"]["eventDefinitionKey"] = legacy
+            warnings.append(
+                f"Moved trigger '{trigger.get('key')}' eventDefinitionKey into configurationArguments."
+            )
+
+
+def _normalize_activity_configuration(activity: dict, warnings: List[str]) -> None:
+    cfg = activity.get("configurationArguments")
+    if not isinstance(cfg, dict):
+        return
+
+    activity_type = (activity.get("type") or "").upper()
+
+    if activity_type == "WAIT":
+        if cfg.get("waitDuration") is None:
+            cfg["waitDuration"] = 1
+            warnings.append(
+                f"Added default waitDuration=1 for activity '{activity.get('key')}'."
+            )
+        if not cfg.get("waitUnit"):
+            cfg["waitUnit"] = "DAYS"
+            warnings.append(
+                f"Added default waitUnit 'DAYS' for activity '{activity.get('key')}'."
+            )
+        cfg["waitUnit"] = _normalize_wait_unit(cfg.get("waitUnit"), warnings)
+
+    if activity_type == "EMAIL":
+        if cfg.get("emailAssetId") and not cfg.get("emailId"):
+            activity["type"] = "EMAILV2"
+            warnings.append(
+                f"Upgraded activity '{activity.get('key')}' to EMAILV2 because emailAssetId is present."
+            )
+            activity_type = "EMAILV2"
+
+    if activity_type == "EMAILV2":
+        email_asset_id = _coerce_int(cfg.get("emailAssetId"))
+        if email_asset_id is not None:
+            cfg["emailAssetId"] = email_asset_id
+        if cfg.get("emailAssetId") and not cfg.get("emailAssetName"):
+            cfg["emailAssetName"] = activity.get("name")
+            warnings.append(
+                f"Added emailAssetName for activity '{activity.get('key')}'."
+            )
+        if cfg.get("emailId") and not cfg.get("emailAssetId"):
+            activity["type"] = "EMAIL"
+            warnings.append(
+                f"Downgraded activity '{activity.get('key')}' to EMAIL because emailId is present."
+            )
+
+    if activity_type == "ENGAGEMENTSPLIT":
+        if not cfg.get("criteria"):
+            cfg["criteria"] = "Open"
+            warnings.append(
+                f"Added default engagement criteria 'Open' for activity '{activity.get('key')}'."
+            )
+
+    if activity_type == "UPDATECONTACT":
+        if not cfg.get("updateFields"):
+            cfg["updateFields"] = [
+                {"fieldName": "LastUpdated", "value": "NOW"}
+            ]
+            warnings.append(
+                f"Added default updateFields for activity '{activity.get('key')}'."
+            )
+        if cfg.get("dataExtensionName") and not cfg.get("dataExtensionKey"):
+            cfg["dataExtensionKey"] = cfg.get("dataExtensionName")
+            warnings.append(
+                f"Copied dataExtensionName to dataExtensionKey for activity '{activity.get('key')}'."
+            )
 
 
 def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
