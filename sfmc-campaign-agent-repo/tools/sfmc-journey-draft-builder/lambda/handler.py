@@ -592,6 +592,126 @@ def _prune_server_fields(spec: dict) -> Tuple[dict, List[str]]:
     return pruned, warnings
 
 
+def _normalize_type(value: Any, mapping: dict, warnings: List[str], label: str) -> Any:
+    if not isinstance(value, str):
+        return value
+    key = value.strip()
+    if not key:
+        return value
+    mapped = mapping.get(key.lower())
+    if mapped and mapped != value:
+        warnings.append(f"Normalized {label} type '{value}' to '{mapped}'.")
+        return mapped
+    return value
+
+
+def _normalize_wait_unit(value: Any, warnings: List[str]) -> Any:
+    if not isinstance(value, str):
+        return value
+    key = value.strip().lower()
+    if not key:
+        return value
+    mapping = {
+        "minutes": "Minutes",
+        "minute": "Minutes",
+        "mins": "Minutes",
+        "min": "Minutes",
+        "hours": "Hours",
+        "hour": "Hours",
+        "hrs": "Hours",
+        "hr": "Hours",
+        "days": "Days",
+        "day": "Days",
+        "weeks": "Weeks",
+        "week": "Weeks",
+    }
+    mapped = mapping.get(key)
+    if mapped and mapped != value:
+        warnings.append(f"Normalized waitUnit '{value}' to '{mapped}'.")
+        return mapped
+    return value
+
+
+def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) -> None:
+    args = item.get("arguments")
+    cfg = item.get("configurationArguments")
+    args_dict = args if isinstance(args, dict) else None
+    cfg_dict = cfg if isinstance(cfg, dict) else None
+
+    if args is not None and args_dict is None:
+        warnings.append(f"Ignored non-object arguments for {label}.")
+
+    if cfg is not None and cfg_dict is None:
+        warnings.append(f"Ignored non-object configurationArguments for {label}.")
+
+    if cfg_dict is None and args_dict is not None:
+        item["configurationArguments"] = args_dict
+        item.pop("arguments", None)
+        warnings.append(f"Promoted {label} arguments to configurationArguments.")
+        return
+
+    if cfg_dict is not None and args_dict is not None:
+        merged = dict(args_dict)
+        merged.update(cfg_dict)
+        item["configurationArguments"] = merged
+        item.pop("arguments", None)
+        warnings.append(f"Merged {label} arguments into configurationArguments.")
+        return
+
+    if cfg_dict is None:
+        item["configurationArguments"] = {}
+
+
+def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
+    if not isinstance(spec, dict):
+        return spec
+
+    if "workflowApiVersion" in spec and not isinstance(spec.get("workflowApiVersion"), str):
+        spec["workflowApiVersion"] = str(spec.get("workflowApiVersion"))
+        warnings.append("Coerced workflowApiVersion to string.")
+
+    trigger_type_map = {
+        "event": "Event",
+    }
+    activity_type_map = {
+        "wait": "Wait",
+        "email": "Email",
+        "emailv2": "EmailV2",
+        "engagementsplit": "EngagementSplit",
+        "updatecontact": "UpdateContact",
+    }
+
+    triggers = spec.get("triggers")
+    if isinstance(triggers, list):
+        for idx, trigger in enumerate(triggers, start=1):
+            if not isinstance(trigger, dict):
+                warnings.append(f"Ignored non-object trigger at index {idx}.")
+                continue
+            if not trigger.get("key"):
+                trigger["key"] = f"TRIGGER_{idx}"
+                warnings.append(f"Added missing trigger key 'TRIGGER_{idx}'.")
+            trigger["type"] = _normalize_type(trigger.get("type"), trigger_type_map, warnings, "trigger")
+            _merge_configuration_arguments(trigger, warnings, f"trigger '{trigger.get('key')}'")
+
+    activities = spec.get("activities")
+    if isinstance(activities, list):
+        for idx, activity in enumerate(activities, start=1):
+            if not isinstance(activity, dict):
+                warnings.append(f"Ignored non-object activity at index {idx}.")
+                continue
+            if not activity.get("key"):
+                activity["key"] = f"ACTIVITY_{idx}"
+                warnings.append(f"Added missing activity key 'ACTIVITY_{idx}'.")
+            activity["type"] = _normalize_type(activity.get("type"), activity_type_map, warnings, "activity")
+            _merge_configuration_arguments(activity, warnings, f"activity '{activity.get('key')}'")
+
+            cfg = activity.get("configurationArguments")
+            if isinstance(cfg, dict) and "waitUnit" in cfg:
+                cfg["waitUnit"] = _normalize_wait_unit(cfg.get("waitUnit"), warnings)
+
+    return spec
+
+
 def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
     """
     Ensure triggers + activities have basic outcomes wired in sequence when outcomes are missing.
@@ -663,6 +783,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     if isinstance(js, dict):
         pruned, w = _prune_server_fields(js)
         warnings.extend(w)
+        pruned = _normalize_journey_spec(pruned, warnings)
         pruned = _ensure_default_outcomes(pruned, warnings)
         return pruned, warnings
 
@@ -671,6 +792,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     if isinstance(js2, dict):
         pruned, w = _prune_server_fields(js2)
         warnings.extend(w)
+        pruned = _normalize_journey_spec(pruned, warnings)
         pruned = _ensure_default_outcomes(pruned, warnings)
         return pruned, warnings
 
@@ -685,6 +807,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
 
     pruned, w = _prune_server_fields(spec)
     warnings.extend(w)
+    pruned = _normalize_journey_spec(pruned, warnings)
     pruned = _ensure_default_outcomes(pruned, warnings)
     return pruned, warnings
 
