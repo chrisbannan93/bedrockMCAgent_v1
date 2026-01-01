@@ -592,6 +592,62 @@ def _prune_server_fields(spec: dict) -> Tuple[dict, List[str]]:
     return pruned, warnings
 
 
+def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
+    """
+    Ensure triggers + activities have basic outcomes wired in sequence when outcomes are missing.
+
+    This helps Journey Builder render the canvas when callers omit explicit wiring.
+    """
+    if not isinstance(spec, dict):
+        return spec
+
+    activities = spec.get("activities")
+    if not isinstance(activities, list) or not activities:
+        return spec
+
+    activity_keys: List[str] = []
+    for idx, activity in enumerate(activities, start=1):
+        if not isinstance(activity, dict):
+            continue
+        key = activity.get("key")
+        if not key:
+            key = f"AUTO_ACTIVITY_{idx}"
+            activity["key"] = key
+            warnings.append(f"Added missing activity key '{key}'.")
+        activity_keys.append(key)
+
+    if not activity_keys:
+        return spec
+
+    triggers = spec.get("triggers")
+    if isinstance(triggers, list):
+        for trigger in triggers:
+            if not isinstance(trigger, dict):
+                continue
+            outcomes = trigger.get("outcomes")
+            if not isinstance(outcomes, list) or not outcomes:
+                trigger["outcomes"] = [{"next": activity_keys[0]}]
+                warnings.append("Added default trigger outcome to first activity.")
+
+    for idx, activity in enumerate(activities):
+        if not isinstance(activity, dict):
+            continue
+        outcomes = activity.get("outcomes")
+        if isinstance(outcomes, list) and outcomes:
+            continue
+        next_key = activity_keys[idx + 1] if idx + 1 < len(activity_keys) else None
+        if next_key:
+            activity["outcomes"] = [{"next": next_key}]
+            warnings.append(
+                f"Added default outcome from activity '{activity.get('key')}' to '{next_key}'."
+            )
+        else:
+            activity["outcomes"] = []
+            warnings.append(f"Added empty outcomes for terminal activity '{activity.get('key')}'.")
+
+    return spec
+
+
 def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     """
     Accept either:
@@ -607,6 +663,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     if isinstance(js, dict):
         pruned, w = _prune_server_fields(js)
         warnings.extend(w)
+        pruned = _ensure_default_outcomes(pruned, warnings)
         return pruned, warnings
 
     # Alias: "spec"
@@ -614,6 +671,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     if isinstance(js2, dict):
         pruned, w = _prune_server_fields(js2)
         warnings.extend(w)
+        pruned = _ensure_default_outcomes(pruned, warnings)
         return pruned, warnings
 
     # Build from top-level fields
@@ -627,6 +685,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
 
     pruned, w = _prune_server_fields(spec)
     warnings.extend(w)
+    pruned = _ensure_default_outcomes(pruned, warnings)
     return pruned, warnings
 
 
