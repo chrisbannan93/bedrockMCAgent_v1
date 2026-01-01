@@ -669,6 +669,47 @@ def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) 
         item["arguments"] = {}
 
 
+def _sync_arguments_from_configuration(item: dict, warnings: List[str], label: str) -> None:
+    cfg = item.get("configurationArguments")
+    args = item.get("arguments")
+
+    cfg_dict = cfg if isinstance(cfg, dict) else None
+    args_dict = args if isinstance(args, dict) else None
+
+    if cfg_dict is not None:
+        if args_dict is None or args_dict != cfg_dict:
+            item["arguments"] = dict(cfg_dict)
+            warnings.append(f"Synchronized {label} arguments with configurationArguments.")
+        return
+
+    if cfg_dict is None and args_dict is not None:
+        item["configurationArguments"] = dict(args_dict)
+        warnings.append(f"Synchronized {label} configurationArguments with arguments.")
+
+
+def _normalize_outcomes_list(item: dict, warnings: List[str], label: str) -> None:
+    outcomes = item.get("outcomes")
+    if outcomes is None:
+        return
+    if not isinstance(outcomes, list):
+        warnings.append(f"Ignored non-array outcomes for {label}.")
+        item["outcomes"] = []
+        return
+
+    normalized: List[dict] = []
+    for idx, outcome in enumerate(outcomes, start=1):
+        if not isinstance(outcome, dict):
+            warnings.append(f"Ignored non-object outcome at index {idx} for {label}.")
+            continue
+        outcome_copy = dict(outcome)
+        if "next" in outcome_copy and "arguments" not in outcome_copy:
+            outcome_copy["arguments"] = {}
+            warnings.append(f"Added empty arguments for outcome {idx} in {label}.")
+        normalized.append(outcome_copy)
+
+    item["outcomes"] = normalized
+
+
 def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
     if not isinstance(spec, dict):
         return spec
@@ -711,6 +752,9 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
             trigger["type"] = _normalize_type(trigger.get("type"), trigger_type_map, warnings, "trigger")
             _merge_configuration_arguments(trigger, warnings, f"trigger '{trigger.get('key')}'")
             _normalize_trigger_configuration(trigger, warnings)
+            _normalize_trigger_defaults(trigger, warnings)
+            _normalize_outcomes_list(trigger, warnings, f"trigger '{trigger.get('key')}'")
+            _sync_arguments_from_configuration(trigger, warnings, f"trigger '{trigger.get('key')}'")
 
     activities = spec.get("activities")
     if isinstance(activities, list):
@@ -732,6 +776,9 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
                 cfg["waitUnit"] = _normalize_wait_unit(cfg.get("waitUnit"), warnings)
 
             _normalize_activity_configuration(activity, warnings)
+            _normalize_activity_defaults(activity, warnings)
+            _normalize_outcomes_list(activity, warnings, f"activity '{activity.get('key')}'")
+            _sync_arguments_from_configuration(activity, warnings, f"activity '{activity.get('key')}'")
 
     return spec
 
@@ -770,7 +817,7 @@ def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
                 continue
             outcomes = trigger.get("outcomes")
             if not isinstance(outcomes, list) or not outcomes:
-                trigger["outcomes"] = [{"next": activity_keys[0]}]
+                trigger["outcomes"] = [{"next": activity_keys[0], "arguments": {}}]
                 warnings.append("Added default trigger outcome to first activity.")
 
     for idx, activity in enumerate(activities):
@@ -781,7 +828,7 @@ def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
             continue
         next_key = activity_keys[idx + 1] if idx + 1 < len(activity_keys) else None
         if next_key:
-            activity["outcomes"] = [{"next": next_key}]
+            activity["outcomes"] = [{"next": next_key, "arguments": {}}]
             warnings.append(
                 f"Added default outcome from activity '{activity.get('key')}' to '{next_key}'."
             )
@@ -817,6 +864,63 @@ def _normalize_trigger_configuration(trigger: dict, warnings: List[str]) -> None
             warnings.append(
                 f"Moved trigger '{trigger.get('key')}' eventDefinitionKey into configurationArguments."
             )
+
+    if "eventDefinitionKey" in cfg and "eventDefinitionId" in cfg:
+        cfg.pop("eventDefinitionId", None)
+        warnings.append(
+            f"Removed eventDefinitionId from trigger '{trigger.get('key')}' to avoid conflicts."
+        )
+
+
+def _normalize_trigger_defaults(trigger: dict, warnings: List[str]) -> None:
+    if not isinstance(trigger, dict):
+        return
+    if not trigger.get("name"):
+        trigger["name"] = trigger.get("key")
+        warnings.append(f"Added missing trigger name '{trigger.get('name')}'.")
+
+    trigger.setdefault("type", "Event")
+    trigger.setdefault("description", trigger.get("name") or trigger.get("key"))
+
+    if not trigger.get("metaData"):
+        trigger["metaData"] = {"source": "sfmc-journey-draft-builder"}
+        warnings.append(f"Added default trigger metaData for '{trigger.get('key')}'.")
+
+    if not trigger.get("icon"):
+        trigger["icon"] = "event"
+        warnings.append(f"Added default trigger icon for '{trigger.get('key')}'.")
+
+    if not trigger.get("arguments"):
+        trigger["arguments"] = dict(trigger.get("configurationArguments") or {})
+
+
+def _normalize_activity_defaults(activity: dict, warnings: List[str]) -> None:
+    if not isinstance(activity, dict):
+        return
+
+    if not activity.get("name"):
+        activity["name"] = activity.get("key")
+        warnings.append(f"Added missing activity name '{activity.get('name')}'.")
+
+    if not activity.get("description"):
+        activity["description"] = activity.get("name") or activity.get("key")
+        warnings.append(f"Added default activity description for '{activity.get('key')}'.")
+
+    if not activity.get("metaData"):
+        activity["metaData"] = {"source": "sfmc-journey-draft-builder"}
+        warnings.append(f"Added default activity metaData for '{activity.get('key')}'.")
+
+    if not activity.get("icon"):
+        activity_type = (activity.get("type") or "").upper()
+        icon_map = {
+            "WAIT": "wait",
+            "EMAIL": "email",
+            "EMAILV2": "email",
+            "ENGAGEMENTSPLIT": "split",
+            "UPDATECONTACT": "update",
+        }
+        activity["icon"] = icon_map.get(activity_type, "activity")
+        warnings.append(f"Added default activity icon for '{activity.get('key')}'.")
 
 
 def _normalize_activity_configuration(activity: dict, warnings: List[str]) -> None:
@@ -855,6 +959,16 @@ def _normalize_activity_configuration(activity: dict, warnings: List[str]) -> No
             cfg["emailAssetName"] = activity.get("name")
             warnings.append(
                 f"Added emailAssetName for activity '{activity.get('key')}'."
+            )
+        if cfg.get("emailAssetId") and not cfg.get("emailAssetType"):
+            cfg["emailAssetType"] = "Email"
+            warnings.append(
+                f"Added emailAssetType for activity '{activity.get('key')}'."
+            )
+        if cfg.get("emailAssetId") and not cfg.get("requestType"):
+            cfg["requestType"] = "SYNC"
+            warnings.append(
+                f"Added requestType 'SYNC' for activity '{activity.get('key')}'."
             )
         if cfg.get("emailId") and not cfg.get("emailAssetId"):
             activity["type"] = "EMAIL"
@@ -900,6 +1014,12 @@ def _normalize_activity_configuration(activity: dict, warnings: List[str]) -> No
             cfg["dataExtensionKey"] = cfg.get("dataExtensionName")
             warnings.append(
                 f"Copied dataExtensionName to dataExtensionKey for activity '{activity.get('key')}'."
+            )
+
+        if cfg.get("dataExtensionKey") and not cfg.get("useUpsert"):
+            cfg["useUpsert"] = True
+            warnings.append(
+                f"Added default useUpsert=true for activity '{activity.get('key')}'."
             )
 
 
