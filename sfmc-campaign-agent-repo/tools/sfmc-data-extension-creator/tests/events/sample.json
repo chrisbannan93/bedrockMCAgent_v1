@@ -1,14 +1,17 @@
 {
-  "name": "internet_subscribers",
-  "customerKey": "internet_subscribers_key",
-  "description": "Internet subscriber list",
-  "categoryId": 12345,
-  "fields": [
-    { "name": "SubscriberKey", "fieldType": "Text", "maxLength": 254, "isRequired": true, "isPrimaryKey": true },
-    { "name": "EmailAddress", "fieldType": "EmailAddress", "maxLength": 254, "isRequired": true },
-    { "name": "PlanName", "fieldType": "Text", "maxLength": 100, "isRequired": false },
-    { "name": "SignupDate", "fieldType": "Date", "isRequired": false }
-  ],
-  "allowExisting": true,
-  "forceTokenRefresh": true
+  "path": "/createDataExtension",
+  "body": {
+    "name": "internet_subscribers",
+    "customerKey": "internet_subscribers_key",
+    "description": "Internet subscriber list",
+    "categoryId": 393106,
+    "fields": [
+      { "name": "SubscriberKey", "fieldType": "Text", "maxLength": 254, "isRequired": true, "isPrimaryKey": true },
+      { "name": "EmailAddress", "fieldType": "EmailAddress", "maxLength": 254, "isRequired": true },
+      { "name": "PlanName", "fieldType": "Text", "maxLength": 100, "isRequired": false },
+      { "name": "SignupDate", "fieldType": "Date", "isRequired": false }
+    ],
+    "allowExisting": true,
+    "forceTokenRefresh": true
+  }
 }
