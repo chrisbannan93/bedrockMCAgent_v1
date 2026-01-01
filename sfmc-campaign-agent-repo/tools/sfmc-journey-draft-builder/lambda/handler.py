@@ -869,14 +869,33 @@ def _normalize_activity_configuration(activity: dict, warnings: List[str]) -> No
                 f"Added default engagement criteria 'Open' for activity '{activity.get('key')}'."
             )
 
+        outcomes = activity.get("outcomes")
+        if isinstance(outcomes, list) and len(outcomes) == 1:
+            outcomes.append({}) # Add a default 'No' path that exits the journey
+            warnings.append(
+                f"Added default 'No' path (exit) outcome for engagement split activity '{activity.get('key')}'."
+            )
+
     if activity_type == "UPDATECONTACT":
         if not cfg.get("updateFields"):
             cfg["updateFields"] = [
-                {"fieldName": "LastUpdated", "value": "NOW"}
+                {"fieldName": "LastUpdated", "value": "Now()"}
             ]
             warnings.append(
                 f"Added default updateFields for activity '{activity.get('key')}'."
             )
+        else:
+            fields = cfg.get("updateFields")
+            if isinstance(fields, list):
+                for f in fields:
+                    if isinstance(f, dict):
+                        val = f.get("value")
+                        if isinstance(val, str) and val.lower() == "getdate":
+                            f["value"] = "Now()"
+                            warnings.append(
+                                f"Normalized updateFields value 'getdate' to 'Now()' for activity '{activity.get('key')}'."
+                            )
+
         if cfg.get("dataExtensionName") and not cfg.get("dataExtensionKey"):
             cfg["dataExtensionKey"] = cfg.get("dataExtensionName")
             warnings.append(
@@ -1124,6 +1143,8 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
 
         url = f"{rest_base}/interaction/v1/interactions"
         headers = _sfmc_headers(access_token)
+
+        logger.info("SENDING_TO_SFMC_API url=%s payload=%s", url, json.dumps(spec))
 
         t_call = _perf_ms()
         status, body = _http_json("POST", url, headers=headers, payload=spec, timeout=REST_TIMEOUT)
