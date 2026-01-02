@@ -735,6 +735,49 @@ def _strip_duplicate_arguments(spec: dict, warnings: List[str]) -> dict:
     return spec
 
 
+def _prepare_sfmc_payload(spec: dict, warnings: List[str]) -> dict:
+    """
+    Build a payload optimized for SFMC createInteraction.
+
+    SFMC's create API expects "arguments" on triggers/activities. Some callers provide
+    "configurationArguments" (UI-friendly), so we normalize to "arguments" for the API.
+    """
+    if not isinstance(spec, dict):
+        return spec
+
+    payload = json.loads(json.dumps(spec))
+
+    def _normalize_items(items: Any, label: str) -> None:
+        if not isinstance(items, list):
+            return
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            cfg = item.get("configurationArguments")
+            args = item.get("arguments")
+            cfg_dict = cfg if isinstance(cfg, dict) else None
+            args_dict = args if isinstance(args, dict) else None
+
+            if args_dict is None and cfg_dict is not None:
+                item["arguments"] = dict(cfg_dict)
+                warnings.append(f"Prepared {label} arguments from configurationArguments.")
+            if args_dict is not None and cfg_dict is None:
+                item["arguments"] = dict(args_dict)
+            if isinstance(cfg_dict, dict):
+                item.pop("configurationArguments", None)
+
+            outcomes = item.get("outcomes")
+            if isinstance(outcomes, list):
+                item["outcomes"] = [
+                    outcome for outcome in outcomes if isinstance(outcome, dict) and outcome
+                ]
+
+    _normalize_items(payload.get("triggers"), "trigger")
+    _normalize_items(payload.get("activities"), "activity")
+
+    return payload
+
+
 def _resolve_previous_email_key(activities: List[dict], current_index: int) -> Optional[str]:
     if not isinstance(activities, list):
         return None
@@ -1075,6 +1118,20 @@ def _normalize_activity_configuration(
             warnings.append(
                 f"Added default 'No' path (exit) outcome for engagement split activity '{activity.get('key')}'."
             )
+        if isinstance(outcomes, list) and outcomes:
+            for idx, outcome in enumerate(outcomes, start=1):
+                if not isinstance(outcome, dict):
+                    continue
+                args = outcome.get("arguments")
+                if not isinstance(args, dict):
+                    args = {}
+                if "branchResult" not in args:
+                    args["branchResult"] = "true" if idx == 1 else "false"
+                    warnings.append(
+                        f"Added branchResult '{args['branchResult']}' for engagement split outcome {idx} on activity "
+                        f"'{activity.get('key')}'."
+                    )
+                outcome["arguments"] = args
 
     if activity_type == "UPDATECONTACT":
         if not cfg.get("updateFields"):
@@ -1331,6 +1388,7 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
     create_attempted = False
     create_result = None
     sfmc_evidence = {}
+    sfmc_payload = None
 
     # Optionally create in SFMC (draft journey)
     if create_in_sfmc and not dry_run:
@@ -1357,11 +1415,12 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
 
         url = f"{rest_base}/interaction/v1/interactions"
         headers = _sfmc_headers(access_token)
+        sfmc_payload = _prepare_sfmc_payload(spec, spec_warnings)
 
-        logger.info("SENDING_TO_SFMC_API url=%s payload=%s", url, json.dumps(spec))
+        logger.info("SENDING_TO_SFMC_API url=%s payload=%s", url, json.dumps(sfmc_payload))
 
         t_call = _perf_ms()
-        status, body = _http_json("POST", url, headers=headers, payload=spec, timeout=REST_TIMEOUT)
+        status, body = _http_json("POST", url, headers=headers, payload=sfmc_payload, timeout=REST_TIMEOUT)
         dur = int(_perf_ms() - t_call)
 
         create_result = {
@@ -1405,6 +1464,7 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
         },
         "warnings": spec_warnings,
         "journeySpec": spec,
+        "sfmcPayload": sfmc_payload,
         "createAttempted": bool(create_attempted),
         "sfmcCreateResult": create_result,
         "evidence": sfmc_evidence,
