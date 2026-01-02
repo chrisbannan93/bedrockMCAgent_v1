@@ -763,8 +763,13 @@ def _prepare_sfmc_payload(spec: dict, warnings: List[str]) -> dict:
                 warnings.append(f"Prepared {label} arguments from configurationArguments.")
             if args_dict is not None and cfg_dict is None:
                 item["arguments"] = dict(args_dict)
-            if isinstance(cfg_dict, dict):
-                item.pop("configurationArguments", None)
+                item["configurationArguments"] = dict(args_dict)
+                warnings.append(f"Prepared {label} configurationArguments from arguments.")
+            if isinstance(cfg_dict, dict) and args_dict is not None and args_dict != cfg_dict:
+                item["arguments"] = dict(cfg_dict)
+                warnings.append(
+                    f"Synchronized {label} arguments with configurationArguments for SFMC create."
+                )
 
             outcomes = item.get("outcomes")
             if isinstance(outcomes, list):
@@ -992,6 +997,9 @@ def _normalize_activity_defaults(activity: dict, warnings: List[str]) -> None:
     if not activity.get("metaData"):
         activity["metaData"] = {"source": "sfmc-journey-draft-builder"}
         warnings.append(f"Added default activity metaData for '{activity.get('key')}'.")
+    if isinstance(activity.get("metaData"), dict) and "isConfigured" not in activity["metaData"]:
+        activity["metaData"]["isConfigured"] = True
+        warnings.append(f"Marked activity '{activity.get('key')}' metaData.isConfigured=true.")
 
     if not activity.get("icon"):
         activity_type = (activity.get("type") or "").upper()
@@ -1171,6 +1179,75 @@ def _normalize_activity_configuration(
             )
 
 
+def _validate_required_config(spec: dict) -> List[str]:
+    errors: List[str] = []
+    if not isinstance(spec, dict):
+        return ["journeySpec must be an object"]
+
+    triggers = spec.get("triggers")
+    if isinstance(triggers, list):
+        for trigger in triggers:
+            if not isinstance(trigger, dict):
+                continue
+            trigger_type = (trigger.get("type") or "").upper()
+            if trigger_type == "EVENT":
+                cfg = trigger.get("configurationArguments") or trigger.get("arguments") or {}
+                if not isinstance(cfg, dict) or not cfg.get("eventDefinitionKey"):
+                    errors.append(
+                        f"trigger '{trigger.get('key')}' is missing configurationArguments.eventDefinitionKey"
+                    )
+
+    activities = spec.get("activities")
+    if isinstance(activities, list):
+        for activity in activities:
+            if not isinstance(activity, dict):
+                continue
+            activity_type = (activity.get("type") or "").upper()
+            cfg = activity.get("configurationArguments") or activity.get("arguments") or {}
+            if not isinstance(cfg, dict):
+                cfg = {}
+
+            if activity_type == "WAIT":
+                if cfg.get("waitDuration") is None or not cfg.get("waitUnit"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' WAIT requires waitDuration and waitUnit"
+                    )
+            elif activity_type in {"EMAIL", "EMAILV2"}:
+                if activity_type == "EMAILV2" and not cfg.get("emailAssetId"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' EMAILV2 requires emailAssetId"
+                    )
+                if activity_type == "EMAIL" and not cfg.get("emailId"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' EMAIL requires emailId"
+                    )
+            elif activity_type == "ENGAGEMENTSPLIT":
+                if not cfg.get("criteria"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' ENGAGEMENTSPLIT requires criteria"
+                    )
+                if cfg.get("waitDuration") is None or not cfg.get("waitUnit"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' ENGAGEMENTSPLIT requires waitDuration and waitUnit"
+                    )
+                if not cfg.get("emailActivityKey"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' ENGAGEMENTSPLIT requires emailActivityKey"
+                    )
+            elif activity_type == "UPDATECONTACT":
+                if not cfg.get("dataExtensionKey") and not cfg.get("dataExtensionName"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' UPDATECONTACT requires dataExtensionKey or dataExtensionName"
+                    )
+                fields = cfg.get("updateFields")
+                if not isinstance(fields, list) or not fields:
+                    errors.append(
+                        f"activity '{activity.get('key')}' UPDATECONTACT requires updateFields"
+                    )
+
+    return errors
+
+
 def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     """
     Accept either:
@@ -1267,6 +1344,7 @@ def _validate_for_create(spec: dict) -> Tuple[bool, List[str], List[str]]:
     except Exception:
         errors.append("journeySpec could not be JSON-serialized")
 
+    errors.extend(_validate_required_config(spec))
     ok = (len(missing) == 0 and len(errors) == 0)
     return ok, missing, errors
 
