@@ -651,11 +651,12 @@ def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) 
         return
 
     if cfg_dict is not None and args_dict is not None:
-        merged = dict(args_dict)
-        merged.update(cfg_dict)
-        item["arguments"] = dict(merged)
-        item["configurationArguments"] = dict(merged)
-        warnings.append(f"Merged {label} arguments into configurationArguments.")
+        if args_dict != cfg_dict:
+            warnings.append(
+                f"Ignored {label} arguments because configurationArguments are authoritative."
+            )
+        item["configurationArguments"] = dict(cfg_dict)
+        item["arguments"] = dict(cfg_dict)
         return
 
     if cfg_dict is not None and args_dict is None:
@@ -702,12 +703,54 @@ def _normalize_outcomes_list(item: dict, warnings: List[str], label: str) -> Non
             warnings.append(f"Ignored non-object outcome at index {idx} for {label}.")
             continue
         outcome_copy = dict(outcome)
+        if not outcome_copy:
+            warnings.append(f"Ignored empty outcome at index {idx} for {label}.")
+            continue
+        if "next" in outcome_copy and not outcome_copy.get("next"):
+            warnings.append(f"Ignored outcome with empty next at index {idx} for {label}.")
+            continue
         if "next" in outcome_copy and "arguments" not in outcome_copy:
             outcome_copy["arguments"] = {}
             warnings.append(f"Added empty arguments for outcome {idx} in {label}.")
         normalized.append(outcome_copy)
 
     item["outcomes"] = normalized
+
+
+def _strip_duplicate_arguments(spec: dict, warnings: List[str]) -> dict:
+    if not isinstance(spec, dict):
+        return spec
+
+    def _strip(items: Any, label: str) -> None:
+        if not isinstance(items, list):
+            return
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            args = item.get("arguments")
+            cfg = item.get("configurationArguments")
+            if isinstance(args, dict) and isinstance(cfg, dict) and args == cfg:
+                item.pop("arguments", None)
+                warnings.append(f"Removed duplicate arguments from {label} '{item.get('key')}'.")
+
+    _strip(spec.get("triggers"), "trigger")
+    _strip(spec.get("activities"), "activity")
+    return spec
+
+
+def _resolve_previous_email_key(activities: List[dict], current_index: int) -> Optional[str]:
+    if not isinstance(activities, list):
+        return None
+    for idx in range(current_index - 1, -1, -1):
+        activity = activities[idx]
+        if not isinstance(activity, dict):
+            continue
+        activity_type = (activity.get("type") or "").upper()
+        if activity_type in {"EMAIL", "EMAILV2"}:
+            key = activity.get("key")
+            if key:
+                return key
+    return None
 
 
 def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
@@ -775,7 +818,7 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
             if isinstance(cfg, dict) and "waitUnit" in cfg:
                 cfg["waitUnit"] = _normalize_wait_unit(cfg.get("waitUnit"), warnings)
 
-            _normalize_activity_configuration(activity, warnings)
+            _normalize_activity_configuration(activity, warnings, activities, idx - 1)
             _normalize_activity_defaults(activity, warnings)
             _normalize_outcomes_list(activity, warnings, f"activity '{activity.get('key')}'")
             _sync_arguments_from_configuration(activity, warnings, f"activity '{activity.get('key')}'")
@@ -923,7 +966,12 @@ def _normalize_activity_defaults(activity: dict, warnings: List[str]) -> None:
         warnings.append(f"Added default activity icon for '{activity.get('key')}'.")
 
 
-def _normalize_activity_configuration(activity: dict, warnings: List[str]) -> None:
+def _normalize_activity_configuration(
+    activity: dict,
+    warnings: List[str],
+    activities: Optional[List[dict]] = None,
+    activity_index: Optional[int] = None,
+) -> None:
     cfg = activity.get("configurationArguments")
     if not isinstance(cfg, dict):
         return
@@ -977,18 +1025,69 @@ def _normalize_activity_configuration(activity: dict, warnings: List[str]) -> No
             )
 
     if activity_type == "ENGAGEMENTSPLIT":
+        criteria_map = {
+            "open": "OpenedEmail",
+            "opened": "OpenedEmail",
+            "openedemail": "OpenedEmail",
+            "click": "ClickedEmail",
+            "clicked": "ClickedEmail",
+            "clickedemail": "ClickedEmail",
+            "bounce": "BouncedEmail",
+            "bounced": "BouncedEmail",
+            "bouncedemail": "BouncedEmail",
+            "notopened": "NotOpenedEmail",
+            "notopenedemail": "NotOpenedEmail",
+        }
+        if isinstance(cfg.get("criteria"), str):
+            mapped = criteria_map.get(cfg.get("criteria", "").strip().lower())
+            if mapped and mapped != cfg.get("criteria"):
+                cfg["criteria"] = mapped
+                warnings.append(
+                    f"Normalized engagement split criteria to '{mapped}' for activity '{activity.get('key')}'."
+                )
+
         if not cfg.get("criteria"):
-            cfg["criteria"] = "Open"
+            cfg["criteria"] = "OpenedEmail"
             warnings.append(
-                f"Added default engagement criteria 'Open' for activity '{activity.get('key')}'."
+                f"Added default engagement criteria 'OpenedEmail' for activity '{activity.get('key')}'."
             )
+
+        if not cfg.get("waitDuration"):
+            cfg["waitDuration"] = 1
+            warnings.append(
+                f"Added default engagement split waitDuration=1 for activity '{activity.get('key')}'."
+            )
+        if not cfg.get("waitUnit"):
+            cfg["waitUnit"] = "DAYS"
+            warnings.append(
+                f"Added default engagement split waitUnit 'DAYS' for activity '{activity.get('key')}'."
+            )
+        cfg["waitUnit"] = _normalize_wait_unit(cfg.get("waitUnit"), warnings)
+
+        if not cfg.get("emailActivityKey") and isinstance(activities, list) and activity_index is not None:
+            prev_email_key = _resolve_previous_email_key(activities, activity_index)
+            if prev_email_key:
+                cfg["emailActivityKey"] = prev_email_key
+                warnings.append(
+                    f"Linked engagement split '{activity.get('key')}' to email activity '{prev_email_key}'."
+                )
+            else:
+                warnings.append(
+                    f"Engagement split '{activity.get('key')}' has no prior email activity to link."
+                )
 
         outcomes = activity.get("outcomes")
         if isinstance(outcomes, list) and len(outcomes) == 1:
-            outcomes.append({}) # Add a default 'No' path that exits the journey
-            warnings.append(
-                f"Added default 'No' path (exit) outcome for engagement split activity '{activity.get('key')}'."
-            )
+            existing_next = outcomes[0].get("next") if isinstance(outcomes[0], dict) else None
+            if existing_next:
+                outcomes.append({"next": existing_next, "arguments": {}})
+                warnings.append(
+                    f"Duplicated engagement split outcome for activity '{activity.get('key')}' to satisfy two-path requirement."
+                )
+            else:
+                warnings.append(
+                    f"Engagement split activity '{activity.get('key')}' has a single outcome without a next step."
+                )
 
     if activity_type == "UPDATECONTACT":
         if not cfg.get("updateFields"):
@@ -1001,19 +1100,39 @@ def _normalize_activity_configuration(activity: dict, warnings: List[str]) -> No
         else:
             fields = cfg.get("updateFields")
             if isinstance(fields, list):
+                normalized_fields = []
                 for f in fields:
-                    if isinstance(f, dict):
-                        val = f.get("value")
-                        if isinstance(val, str) and val.lower() == "getdate":
-                            f["value"] = "Now()"
-                            warnings.append(
-                                f"Normalized updateFields value 'getdate' to 'Now()' for activity '{activity.get('key')}'."
-                            )
+                    if not isinstance(f, dict):
+                        continue
+                    field_name = f.get("fieldName")
+                    val = f.get("value")
+                    if not field_name or val is None:
+                        warnings.append(
+                            f"Removed invalid updateFields entry for activity '{activity.get('key')}'."
+                        )
+                        continue
+                    if isinstance(val, str) and val.lower() == "getdate":
+                        val = "Now()"
+                        warnings.append(
+                            f"Normalized updateFields value 'getdate' to 'Now()' for activity '{activity.get('key')}'."
+                        )
+                    normalized_fields.append({"fieldName": field_name, "value": val})
+                if not normalized_fields:
+                    normalized_fields = [{"fieldName": "LastUpdated", "value": "Now()"}]
+                    warnings.append(
+                        f"Added default updateFields for activity '{activity.get('key')}' after removing invalid entries."
+                    )
+                cfg["updateFields"] = normalized_fields
 
         if cfg.get("dataExtensionName") and not cfg.get("dataExtensionKey"):
             cfg["dataExtensionKey"] = cfg.get("dataExtensionName")
             warnings.append(
                 f"Copied dataExtensionName to dataExtensionKey for activity '{activity.get('key')}'."
+            )
+        if cfg.get("dataExtensionKey") and not cfg.get("dataExtensionName"):
+            cfg["dataExtensionName"] = cfg.get("dataExtensionKey")
+            warnings.append(
+                f"Copied dataExtensionKey to dataExtensionName for activity '{activity.get('key')}'."
             )
 
         if cfg.get("dataExtensionKey") and not cfg.get("useUpsert"):
@@ -1040,6 +1159,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
         warnings.extend(w)
         pruned = _normalize_journey_spec(pruned, warnings)
         pruned = _ensure_default_outcomes(pruned, warnings)
+        pruned = _strip_duplicate_arguments(pruned, warnings)
         return pruned, warnings
 
     # Alias: "spec"
@@ -1049,6 +1169,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
         warnings.extend(w)
         pruned = _normalize_journey_spec(pruned, warnings)
         pruned = _ensure_default_outcomes(pruned, warnings)
+        pruned = _strip_duplicate_arguments(pruned, warnings)
         return pruned, warnings
 
     # Build from top-level fields
@@ -1064,6 +1185,7 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     warnings.extend(w)
     pruned = _normalize_journey_spec(pruned, warnings)
     pruned = _ensure_default_outcomes(pruned, warnings)
+    pruned = _strip_duplicate_arguments(pruned, warnings)
     return pruned, warnings
 
 
