@@ -735,6 +735,80 @@ def _strip_duplicate_arguments(spec: dict, warnings: List[str]) -> dict:
     return spec
 
 
+def _prepare_sfmc_payload(spec: dict, warnings: List[str]) -> dict:
+    """
+    Build a payload optimized for SFMC createInteraction.
+
+    SFMC's create API expects "arguments" on triggers/activities. Some callers provide
+    "configurationArguments" (UI-friendly), so we normalize to "arguments" for the API.
+    """
+    if not isinstance(spec, dict):
+        return spec
+
+    payload = json.loads(json.dumps(spec))
+
+    def _normalize_items(items: Any, label: str) -> None:
+        if not isinstance(items, list):
+            return
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            cfg = item.get("configurationArguments")
+            args = item.get("arguments")
+            cfg_dict = cfg if isinstance(cfg, dict) else None
+            args_dict = args if isinstance(args, dict) else None
+
+            if args_dict is None and cfg_dict is not None:
+                item["arguments"] = dict(cfg_dict)
+                warnings.append(f"Prepared {label} arguments from configurationArguments.")
+            if args_dict is not None and cfg_dict is None:
+                item["arguments"] = dict(args_dict)
+            if isinstance(cfg_dict, dict):
+                item.pop("configurationArguments", None)
+
+            outcomes = item.get("outcomes")
+            if isinstance(outcomes, list):
+                normalized_outcomes = []
+                for outcome in outcomes:
+                    if not isinstance(outcome, dict) or not outcome:
+                        continue
+                    if "arguments" not in outcome:
+                        outcome = dict(outcome)
+                        outcome["arguments"] = {}
+                    if outcome.get("next") is None:
+                        outcome = dict(outcome)
+                        outcome.pop("next", None)
+                    elif isinstance(outcome.get("next"), str) and not outcome.get("next").strip():
+                        outcome = dict(outcome)
+                        outcome.pop("next", None)
+                    normalized_outcomes.append(outcome)
+                item["outcomes"] = normalized_outcomes
+
+            meta = item.get("metaData")
+            if not isinstance(meta, dict):
+                meta = {}
+            if "isConfigured" not in meta:
+                meta["isConfigured"] = True
+            item["metaData"] = meta
+
+            if label == "activity":
+                activity_type = (item.get("type") or "").upper()
+                args = item.get("arguments")
+                if activity_type == "UPDATECONTACT" and isinstance(args, dict):
+                    update_fields = args.get("updateFields")
+                    if isinstance(update_fields, list) and not args.get("fields"):
+                        args["fields"] = [
+                            {"name": f.get("fieldName"), "value": f.get("value")}
+                            for f in update_fields
+                            if isinstance(f, dict) and f.get("fieldName")
+                        ]
+
+    _normalize_items(payload.get("triggers"), "trigger")
+    _normalize_items(payload.get("activities"), "activity")
+
+    return payload
+
+
 def _resolve_previous_email_key(activities: List[dict], current_index: int) -> Optional[str]:
     if not isinstance(activities, list):
         return None
@@ -1071,10 +1145,24 @@ def _normalize_activity_configuration(
 
         outcomes = activity.get("outcomes")
         if isinstance(outcomes, list) and len(outcomes) == 1:
-            outcomes.append({"next": None, "arguments": {}}) # Add a default 'No' path that exits the journey
+            outcomes.append({"arguments": {}})  # Add a default 'No' path that exits the journey
             warnings.append(
                 f"Added default 'No' path (exit) outcome for engagement split activity '{activity.get('key')}'."
             )
+        if isinstance(outcomes, list) and outcomes:
+            for idx, outcome in enumerate(outcomes, start=1):
+                if not isinstance(outcome, dict):
+                    continue
+                args = outcome.get("arguments")
+                if not isinstance(args, dict):
+                    args = {}
+                if "branchResult" not in args:
+                    args["branchResult"] = "true" if idx == 1 else "false"
+                    warnings.append(
+                        f"Added branchResult '{args['branchResult']}' for engagement split outcome {idx} on activity "
+                        f"'{activity.get('key')}'."
+                    )
+                outcome["arguments"] = args
 
     if activity_type == "UPDATECONTACT":
         if not cfg.get("updateFields"):
@@ -1192,6 +1280,12 @@ def _validate_for_create(spec: dict) -> Tuple[bool, List[str], List[str]]:
     else:
         if len(tr) > MAX_TRIGGERS:
             errors.append(f"triggers exceeds MAX_TRIGGERS ({MAX_TRIGGERS})")
+        for trigger in tr:
+            if not isinstance(trigger, dict):
+                continue
+            args = trigger.get("configurationArguments") or trigger.get("arguments") or {}
+            if not (isinstance(args, dict) and args.get("eventDefinitionKey")):
+                errors.append(f"trigger '{trigger.get('key')}' is missing eventDefinitionKey")
 
     act = spec.get("activities")
     if act is None:
@@ -1201,6 +1295,31 @@ def _validate_for_create(spec: dict) -> Tuple[bool, List[str], List[str]]:
     else:
         if len(act) > MAX_ACTIVITIES:
             errors.append(f"activities exceeds MAX_ACTIVITIES ({MAX_ACTIVITIES})")
+
+    # activity-specific validation (best-effort)
+    activities = spec.get("activities")
+    if isinstance(activities, list):
+        for activity in activities:
+            if not isinstance(activity, dict):
+                continue
+            activity_type = (activity.get("type") or "").upper()
+            args = activity.get("configurationArguments") or activity.get("arguments") or {}
+            if activity_type in {"EMAIL", "EMAILV2"}:
+                if not (isinstance(args, dict) and (args.get("emailAssetId") or args.get("emailId"))):
+                    errors.append(f"activity '{activity.get('key')}' is missing emailAssetId/emailId")
+            if activity_type == "ENGAGEMENTSPLIT":
+                if not (isinstance(args, dict) and args.get("emailActivityKey")):
+                    errors.append(f"activity '{activity.get('key')}' is missing emailActivityKey")
+            if activity_type == "UPDATECONTACT":
+                if not isinstance(args, dict):
+                    errors.append(f"activity '{activity.get('key')}' update contact arguments must be an object")
+                else:
+                    if not (args.get("dataExtensionKey") or args.get("dataExtensionName")):
+                        errors.append(
+                            f"activity '{activity.get('key')}' is missing dataExtensionKey/dataExtensionName"
+                        )
+                    if not (args.get("updateFields") or args.get("fields")):
+                        errors.append(f"activity '{activity.get('key')}' is missing updateFields/fields")
 
     # size guard
     try:
@@ -1331,6 +1450,7 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
     create_attempted = False
     create_result = None
     sfmc_evidence = {}
+    sfmc_payload = None
 
     # Optionally create in SFMC (draft journey)
     if create_in_sfmc and not dry_run:
@@ -1357,11 +1477,12 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
 
         url = f"{rest_base}/interaction/v1/interactions"
         headers = _sfmc_headers(access_token)
+        sfmc_payload = _prepare_sfmc_payload(spec, spec_warnings)
 
-        logger.info("SENDING_TO_SFMC_API url=%s payload=%s", url, json.dumps(spec))
+        logger.info("SENDING_TO_SFMC_API url=%s payload=%s", url, json.dumps(sfmc_payload))
 
         t_call = _perf_ms()
-        status, body = _http_json("POST", url, headers=headers, payload=spec, timeout=REST_TIMEOUT)
+        status, body = _http_json("POST", url, headers=headers, payload=sfmc_payload, timeout=REST_TIMEOUT)
         dur = int(_perf_ms() - t_call)
 
         create_result = {
@@ -1405,6 +1526,7 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
         },
         "warnings": spec_warnings,
         "journeySpec": spec,
+        "sfmcPayload": sfmc_payload,
         "createAttempted": bool(create_attempted),
         "sfmcCreateResult": create_result,
         "evidence": sfmc_evidence,
