@@ -1295,6 +1295,91 @@ def _extract_journey_spec(params: dict) -> Tuple[Optional[dict], List[str]]:
     return pruned, warnings
 
 
+def _extract_entry_event_definition(params: dict) -> Tuple[Optional[dict], List[str]]:
+    warnings: List[str] = []
+    if not isinstance(params, dict):
+        return None, ["Params not an object"]
+
+    for key in ("entryEventDefinition", "eventDefinition", "eventDefinitionPayload"):
+        raw = params.get(key)
+        if raw is None:
+            continue
+        if not isinstance(raw, dict):
+            warnings.append(f"Ignored non-object {key}.")
+            return None, warnings
+        payload = dict(raw)
+        if "eventDefinitionKey" not in payload and "key" in payload:
+            payload["eventDefinitionKey"] = payload.get("key")
+            warnings.append("Copied entry event definition key to eventDefinitionKey.")
+        if not payload.get("name"):
+            payload["name"] = payload.get("eventDefinitionKey") or "Entry Event Definition"
+            warnings.append("Added default entry event definition name.")
+        if not payload.get("description"):
+            payload["description"] = payload.get("name")
+            warnings.append("Added default entry event definition description.")
+        return payload, warnings
+
+    return None, warnings
+
+
+def _event_definition_key_from_payload(payload: dict) -> Optional[str]:
+    if not isinstance(payload, dict):
+        return None
+    return payload.get("eventDefinitionKey") or payload.get("key")
+
+
+def _apply_event_definition_key(spec: dict, event_definition_key: str, warnings: List[str]) -> None:
+    if not isinstance(spec, dict):
+        return
+    triggers = spec.get("triggers")
+    if not isinstance(triggers, list):
+        return
+    for trigger in triggers:
+        if not isinstance(trigger, dict):
+            continue
+        trigger_type = (trigger.get("type") or "").upper()
+        if trigger_type != "EVENT":
+            continue
+        cfg = trigger.get("configurationArguments")
+        if not isinstance(cfg, dict):
+            cfg = {}
+            trigger["configurationArguments"] = cfg
+        if not cfg.get("eventDefinitionKey"):
+            cfg["eventDefinitionKey"] = event_definition_key
+            warnings.append(
+                f"Applied entry eventDefinitionKey to trigger '{trigger.get('key')}'."
+            )
+
+
+def _event_definition_exists_error(status: int, body: dict) -> bool:
+    if status == 409:
+        return True
+    msg = ""
+    if isinstance(body, dict):
+        msg = str(body.get("message") or body.get("error") or "")
+    return "already exists" in msg.lower()
+
+
+def _create_event_definition(
+    access_token: str,
+    rest_base: str,
+    payload: dict,
+    warnings: List[str],
+) -> dict:
+    url = f"{rest_base}/interaction/v1/eventDefinitions"
+    headers = _sfmc_headers(access_token)
+    t_call = _perf_ms()
+    status, body = _http_json("POST", url, headers=headers, payload=payload, timeout=REST_TIMEOUT)
+    dur = int(_perf_ms() - t_call)
+    result = {"httpStatus": status, "durationMs": dur, "response": body}
+    if status < 200 or status >= 300:
+        if _event_definition_exists_error(status, body):
+            warnings.append("Entry event definition already exists in SFMC.")
+            result["alreadyExists"] = True
+            return result
+    return result
+
+
 def _validate_for_create(spec: dict) -> Tuple[bool, List[str], List[str]]:
     """
     Minimal validation aligned to Create Interaction requirements:
@@ -1434,6 +1519,18 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
             "message": "Missing journeySpec (or top-level key/name/workflowApiVersion/triggers/activities).",
         }
 
+    entry_event_def, entry_event_warnings = _extract_entry_event_definition(requested_inputs_raw)
+    spec_warnings.extend(entry_event_warnings)
+    if entry_event_def:
+        entry_event_key = _event_definition_key_from_payload(entry_event_def)
+        if not entry_event_key:
+            return 400, {
+                "ok": False,
+                "error": "BadRequest",
+                "message": "entryEventDefinition requires eventDefinitionKey or key.",
+            }
+        _apply_event_definition_key(spec, entry_event_key, spec_warnings)
+
     valid_for_create, missing, errors = _validate_for_create(spec)
 
     # Runtime guardrail (always enforced before any SFMC call)
@@ -1467,6 +1564,7 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
     create_result = None
     sfmc_evidence = {}
     sfmc_payload = None
+    entry_event_result = None
 
     # Optionally create in SFMC (draft journey)
     if create_in_sfmc and not dry_run:
@@ -1489,6 +1587,30 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
                     "message": "SFMC host suffix guardrail failed.",
                     "evidence": sfmc_evidence,
                     "allowlist": SFMC_ALLOWED_HOST_SUFFIXES,
+                }
+
+        if entry_event_def:
+            entry_event_result = _create_event_definition(
+                access_token=access_token,
+                rest_base=rest_base,
+                payload=entry_event_def,
+                warnings=spec_warnings,
+            )
+            if (
+                entry_event_result.get("httpStatus", 0) < 200
+                or entry_event_result.get("httpStatus", 0) >= 300
+            ) and not entry_event_result.get("alreadyExists"):
+                return 502, {
+                    "ok": False,
+                    "tool": TOOL_NAME,
+                    "toolVersion": TOOL_VERSION,
+                    "outputSchemaVersion": OUTPUT_SCHEMA_VERSION,
+                    "error": "SfmcCreateFailed",
+                    "message": "SFMC create event definition call failed.",
+                    "sfmc": entry_event_result,
+                    "evidence": sfmc_evidence,
+                    "validation": {"validForCreate": valid_for_create, "missingRequiredForCreate": missing, "errors": errors},
+                    "warnings": spec_warnings,
                 }
 
         url = f"{rest_base}/interaction/v1/interactions"
@@ -1543,6 +1665,8 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
         "warnings": spec_warnings,
         "journeySpec": spec,
         "sfmcPayload": sfmc_payload,
+        "entryEventDefinition": entry_event_def,
+        "sfmcEntryEventDefinitionResult": entry_event_result,
         "createAttempted": bool(create_attempted),
         "sfmcCreateResult": create_result,
         "evidence": sfmc_evidence,
