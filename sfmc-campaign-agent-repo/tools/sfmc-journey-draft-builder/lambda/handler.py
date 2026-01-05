@@ -647,6 +647,12 @@ def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) 
     if cfg is not None and cfg_dict is None:
         warnings.append(f"Ignored non-object configurationArguments for {label}.")
 
+    if label == "activity" and activity_type == "DATAEXTENSIONUPDATE":
+        if args_dict is None and cfg_dict is not None:
+            item["arguments"] = dict(cfg_dict)
+            warnings.append(f"Copied activity arguments to arguments for {label}.")
+        return
+
     if cfg_dict is None and args_dict is not None:
         item["configurationArguments"] = dict(args_dict)
         item["arguments"] = dict(args_dict)
@@ -1114,6 +1120,12 @@ def _normalize_activity_configuration(
             email_id = _coerce_int(triggered_send.get("emailId"))
             if email_id is not None:
                 triggered_send["emailId"] = email_id
+            if not cfg.get("applicationExtensionKey"):
+                cfg["applicationExtensionKey"] = "jb-email-activity"
+                warnings.append(
+                    f"Added applicationExtensionKey for activity '{activity.get('key')}'."
+                )
+            cfg.setdefault("isModified", True)
         if cfg.get("emailId") and not cfg.get("emailAssetId") and not triggered_send:
             activity["type"] = "EMAIL"
             warnings.append(
