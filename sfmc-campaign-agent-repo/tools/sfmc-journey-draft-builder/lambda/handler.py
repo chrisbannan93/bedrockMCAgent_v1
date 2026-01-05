@@ -1169,6 +1169,58 @@ def _normalize_activity_configuration(
                     )
                 outcome["arguments"] = args
 
+    if activity_type == "ENGAGEMENTDECISION":
+        criteria_map = {
+            "open": 2,
+            "opened": 2,
+            "openedemail": 2,
+            "click": 3,
+            "clicked": 3,
+            "clickedemail": 3,
+            "bounce": 6,
+            "bounced": 6,
+            "bouncedemail": 6,
+        }
+        if isinstance(cfg.get("criteria"), str):
+            mapped = criteria_map.get(cfg.get("criteria", "").strip().lower())
+            if mapped is not None:
+                cfg["statsTypeId"] = mapped
+                warnings.append(
+                    f"Mapped engagement decision criteria to statsTypeId={mapped} for activity '{activity.get('key')}'."
+                )
+        if cfg.get("emailActivityKey") and not cfg.get("refActivityCustomerKey"):
+            cfg["refActivityCustomerKey"] = cfg.get("emailActivityKey")
+            warnings.append(
+                f"Copied emailActivityKey to refActivityCustomerKey for activity '{activity.get('key')}'."
+            )
+        if cfg.get("statsTypeId") is None:
+            cfg["statsTypeId"] = 2
+            warnings.append(
+                f"Added default statsTypeId=2 for activity '{activity.get('key')}'."
+            )
+        cfg.setdefault("statusUrlId", "0")
+
+        outcomes = activity.get("outcomes")
+        if isinstance(outcomes, list) and len(outcomes) == 1:
+            outcomes.append({"next": None, "arguments": {}})
+            warnings.append(
+                f"Added default 'No' path (exit) outcome for engagement decision activity '{activity.get('key')}'."
+            )
+        if isinstance(outcomes, list) and outcomes:
+            for idx, outcome in enumerate(outcomes, start=1):
+                if not isinstance(outcome, dict):
+                    continue
+                args = outcome.get("arguments")
+                if not isinstance(args, dict):
+                    args = {}
+                if "when" not in args:
+                    args["when"] = True if idx == 1 else False
+                    warnings.append(
+                        f"Added when={args['when']} for engagement decision outcome {idx} on activity "
+                        f"'{activity.get('key')}'."
+                    )
+                outcome["arguments"] = args
+
     if activity_type == "UPDATECONTACT":
         if not cfg.get("updateFields"):
             cfg["updateFields"] = [
@@ -1211,6 +1263,21 @@ def _normalize_activity_configuration(
             warnings.append(
                 f"Copied dataExtensionKey to dataExtensionId for activity '{activity.get('key')}'."
             )
+        fields = cfg.get("updateFields")
+        if not cfg.get("field") and isinstance(fields, list) and fields:
+            first = fields[0] if isinstance(fields[0], dict) else {}
+            field_id = first.get("field") or first.get("fieldId") or first.get("id") or first.get("fieldName")
+            if field_id:
+                cfg["field"] = field_id
+                warnings.append(
+                    f"Copied updateFields[0] to field for activity '{activity.get('key')}'."
+                )
+            value = first.get("value")
+            if value is not None and "value" not in cfg:
+                cfg["value"] = value
+                warnings.append(
+                    f"Copied updateFields[0].value to value for activity '{activity.get('key')}'."
+                )
 
 
 def _validate_required_config(spec: dict) -> List[str]:
