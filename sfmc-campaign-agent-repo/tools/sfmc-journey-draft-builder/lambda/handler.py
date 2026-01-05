@@ -612,20 +612,20 @@ def _normalize_wait_unit(value: Any, warnings: List[str]) -> Any:
     if not key:
         return value
     mapping = {
-        "minutes": "minutes",
-        "minute": "minutes",
-        "mins": "minutes",
-        "min": "minutes",
-        "hours": "hours",
-        "hour": "hours",
-        "hrs": "hours",
-        "hr": "hours",
-        "days": "days",
-        "day": "days",
-        "weeks": "weeks",
-        "week": "weeks",
-        "months": "months",
-        "month": "months",
+        "minutes": "MINUTES",
+        "minute": "MINUTES",
+        "mins": "MINUTES",
+        "min": "MINUTES",
+        "hours": "HOURS",
+        "hour": "HOURS",
+        "hrs": "HOURS",
+        "hr": "HOURS",
+        "days": "DAYS",
+        "day": "DAYS",
+        "weeks": "WEEKS",
+        "week": "WEEKS",
+        "months": "MONTHS",
+        "month": "MONTHS",
     }
     mapped = mapping.get(key)
     if mapped and mapped != value:
@@ -813,9 +813,20 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
     if not isinstance(spec, dict):
         return spec
 
-    if "workflowApiVersion" in spec and not isinstance(spec.get("workflowApiVersion"), str):
-        spec["workflowApiVersion"] = str(spec.get("workflowApiVersion"))
-        warnings.append("Coerced workflowApiVersion to string.")
+    if "workflowApiVersion" in spec:
+        workflow_version = spec.get("workflowApiVersion")
+        if isinstance(workflow_version, str):
+            try:
+                spec["workflowApiVersion"] = (
+                    float(workflow_version) if "." in workflow_version else int(workflow_version)
+                )
+                warnings.append("Coerced workflowApiVersion to numeric.")
+            except ValueError:
+                spec["workflowApiVersion"] = 1.0
+                warnings.append("Invalid workflowApiVersion; defaulted to 1.0.")
+    else:
+        spec["workflowApiVersion"] = 1.0
+        warnings.append("Added default workflowApiVersion 1.0.")
 
     if not spec.get("definitionType"):
         spec["definitionType"] = "Multistep"
@@ -1031,6 +1042,19 @@ def _normalize_activity_defaults(activity: dict, warnings: List[str]) -> None:
         warnings.append(f"Added default activity icon for '{activity.get('key')}'.")
 
     activity_type = (activity.get("type") or "").upper()
+    if activity_type in {"EMAIL", "EMAILV2"}:
+        meta = activity.get("metaData")
+        if isinstance(meta, dict):
+            if not meta.get("category"):
+                meta["category"] = "message"
+                warnings.append(
+                    f"Added metaData.category 'message' for activity '{activity.get('key')}'."
+                )
+            if not meta.get("version"):
+                meta["version"] = "1.0"
+                warnings.append(
+                    f"Added metaData.version '1.0' for activity '{activity.get('key')}'."
+                )
     if activity_type == "WAIT":
         meta = activity.get("metaData")
         if not isinstance(meta, dict):
@@ -1061,7 +1085,10 @@ def _normalize_activity_configuration(
     activity_type = (activity.get("type") or "").upper()
 
     if activity_type == "WAIT":
-        if cfg.get("waitDuration") is None:
+        wait_duration = _coerce_int(cfg.get("waitDuration"))
+        if wait_duration is not None:
+            cfg["waitDuration"] = wait_duration
+        else:
             cfg["waitDuration"] = 1
             warnings.append(
                 f"Added default waitDuration=1 for activity '{activity.get('key')}'."
@@ -1120,6 +1147,12 @@ def _normalize_activity_configuration(
             email_id = _coerce_int(triggered_send.get("emailId"))
             if email_id is not None:
                 triggered_send["emailId"] = email_id
+            triggered_send.setdefault("autoAddSubscribers", True)
+            triggered_send.setdefault("autoUpdateSubscribers", True)
+            triggered_send.setdefault("isMultipart", True)
+            triggered_send.setdefault("isSendLogging", True)
+            triggered_send.setdefault("isTrackingClicks", True)
+            triggered_send.setdefault("isSalesforceTracking", True)
             if not cfg.get("applicationExtensionKey"):
                 cfg["applicationExtensionKey"] = "jb-email-activity"
                 warnings.append(
@@ -1373,10 +1406,19 @@ def _validate_required_config(spec: dict) -> List[str]:
                         f"activity '{activity.get('key')}' ENGAGEMENTSPLIT requires emailActivityKey"
                     )
             elif activity_type == "ENGAGEMENTDECISION":
-                if not cfg.get("refActivityCustomerKey"):
+                ref_key = cfg.get("refActivityCustomerKey")
+                if not ref_key:
                     errors.append(
                         f"activity '{activity.get('key')}' ENGAGEMENTDECISION requires refActivityCustomerKey"
                     )
+                else:
+                    if not any(
+                        isinstance(a, dict) and a.get("key") == ref_key for a in activities
+                    ):
+                        errors.append(
+                            f"activity '{activity.get('key')}' ENGAGEMENTDECISION references non-existent activity "
+                            f"'{ref_key}'"
+                        )
                 if cfg.get("statsTypeId") is None:
                     errors.append(
                         f"activity '{activity.get('key')}' ENGAGEMENTDECISION requires statsTypeId"
