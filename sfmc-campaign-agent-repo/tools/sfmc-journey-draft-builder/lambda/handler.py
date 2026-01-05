@@ -612,18 +612,20 @@ def _normalize_wait_unit(value: Any, warnings: List[str]) -> Any:
     if not key:
         return value
     mapping = {
-        "minutes": "MINUTES",
-        "minute": "MINUTES",
-        "mins": "MINUTES",
-        "min": "MINUTES",
-        "hours": "HOURS",
-        "hour": "HOURS",
-        "hrs": "HOURS",
-        "hr": "HOURS",
-        "days": "DAYS",
-        "day": "DAYS",
-        "weeks": "WEEKS",
-        "week": "WEEKS",
+        "minutes": "minutes",
+        "minute": "minutes",
+        "mins": "minutes",
+        "min": "minutes",
+        "hours": "hours",
+        "hour": "hours",
+        "hrs": "hours",
+        "hr": "hours",
+        "days": "days",
+        "day": "days",
+        "weeks": "weeks",
+        "week": "weeks",
+        "months": "months",
+        "month": "months",
     }
     mapped = mapping.get(key)
     if mapped and mapped != value:
@@ -818,11 +820,14 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
         "event": "Event",
     }
     activity_type_map = {
-        "wait": "WAIT",
+        "wait": "Wait",
+        "waitbyduration": "Wait",
         "email": "EMAIL",
         "emailv2": "EMAILV2",
-        "engagementsplit": "ENGAGEMENTSPLIT",
-        "updatecontact": "UPDATECONTACT",
+        "engagementsplit": "EngagementDecision",
+        "engagementdecision": "EngagementDecision",
+        "updatecontact": "DataExtensionUpdate",
+        "dataextensionupdate": "DataExtensionUpdate",
     }
 
     triggers = spec.get("triggers")
@@ -1005,10 +1010,13 @@ def _normalize_activity_defaults(activity: dict, warnings: List[str]) -> None:
         activity_type = (activity.get("type") or "").upper()
         icon_map = {
             "WAIT": "wait",
+            "WAITBYDURATION": "wait",
             "EMAIL": "email",
             "EMAILV2": "email",
             "ENGAGEMENTSPLIT": "split",
+            "ENGAGEMENTDECISION": "split",
             "UPDATECONTACT": "update",
+            "DATAEXTENSIONUPDATE": "update",
         }
         activity["icon"] = icon_map.get(activity_type, "activity")
         warnings.append(f"Added default activity icon for '{activity.get('key')}'.")
@@ -1038,6 +1046,18 @@ def _normalize_activity_configuration(
                 f"Added default waitUnit 'DAYS' for activity '{activity.get('key')}'."
             )
         cfg["waitUnit"] = _normalize_wait_unit(cfg.get("waitUnit"), warnings)
+        meta = activity.get("metaData")
+        if isinstance(meta, dict):
+            if not meta.get("waitType"):
+                meta["waitType"] = "duration"
+                warnings.append(
+                    f"Added metaData.waitType 'duration' for activity '{activity.get('key')}'."
+                )
+            if not meta.get("uiType"):
+                meta["uiType"] = "WAITBYDURATION"
+                warnings.append(
+                    f"Added metaData.uiType 'WAITBYDURATION' for activity '{activity.get('key')}'."
+                )
 
     if activity_type == "EMAIL":
         if cfg.get("emailAssetId") and not cfg.get("emailId"):
@@ -1048,6 +1068,10 @@ def _normalize_activity_configuration(
             activity_type = "EMAILV2"
 
     if activity_type == "EMAILV2":
+        triggered_send = cfg.get("triggeredSend")
+        if not isinstance(triggered_send, dict):
+            triggered_send = None
+
         email_asset_id = _coerce_int(cfg.get("emailAssetId"))
         if email_asset_id is not None:
             cfg["emailAssetId"] = email_asset_id
@@ -1066,7 +1090,11 @@ def _normalize_activity_configuration(
             warnings.append(
                 f"Added requestType 'SYNC' for activity '{activity.get('key')}'."
             )
-        if cfg.get("emailId") and not cfg.get("emailAssetId"):
+        if not cfg.get("emailAssetId") and triggered_send:
+            email_id = _coerce_int(triggered_send.get("emailId"))
+            if email_id is not None:
+                triggered_send["emailId"] = email_id
+        if cfg.get("emailId") and not cfg.get("emailAssetId") and not triggered_send:
             activity["type"] = "EMAIL"
             warnings.append(
                 f"Downgraded activity '{activity.get('key')}' to EMAIL because emailId is present."
@@ -1177,6 +1205,12 @@ def _normalize_activity_configuration(
             warnings.append(
                 f"Added default useUpsert=true for activity '{activity.get('key')}'."
             )
+    if activity_type == "DATAEXTENSIONUPDATE":
+        if not cfg.get("dataExtensionId") and cfg.get("dataExtensionKey"):
+            cfg["dataExtensionId"] = cfg.get("dataExtensionKey")
+            warnings.append(
+                f"Copied dataExtensionKey to dataExtensionId for activity '{activity.get('key')}'."
+            )
 
 
 def _validate_required_config(spec: dict) -> List[str]:
@@ -1213,10 +1247,15 @@ def _validate_required_config(spec: dict) -> List[str]:
                         f"activity '{activity.get('key')}' WAIT requires waitDuration and waitUnit"
                     )
             elif activity_type in {"EMAIL", "EMAILV2"}:
-                if activity_type == "EMAILV2" and not cfg.get("emailAssetId"):
-                    errors.append(
-                        f"activity '{activity.get('key')}' EMAILV2 requires emailAssetId"
-                    )
+                if activity_type == "EMAILV2":
+                    triggered_send = cfg.get("triggeredSend")
+                    email_asset_id = cfg.get("emailAssetId")
+                    if not email_asset_id and not (
+                        isinstance(triggered_send, dict) and triggered_send.get("emailId")
+                    ):
+                        errors.append(
+                            f"activity '{activity.get('key')}' EMAILV2 requires emailAssetId or triggeredSend.emailId"
+                        )
                 if activity_type == "EMAIL" and not cfg.get("emailId"):
                     errors.append(
                         f"activity '{activity.get('key')}' EMAIL requires emailId"
@@ -1234,6 +1273,15 @@ def _validate_required_config(spec: dict) -> List[str]:
                     errors.append(
                         f"activity '{activity.get('key')}' ENGAGEMENTSPLIT requires emailActivityKey"
                     )
+            elif activity_type == "ENGAGEMENTDECISION":
+                if not cfg.get("refActivityCustomerKey"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' ENGAGEMENTDECISION requires refActivityCustomerKey"
+                    )
+                if cfg.get("statsTypeId") is None:
+                    errors.append(
+                        f"activity '{activity.get('key')}' ENGAGEMENTDECISION requires statsTypeId"
+                    )
             elif activity_type == "UPDATECONTACT":
                 if not cfg.get("dataExtensionKey") and not cfg.get("dataExtensionName"):
                     errors.append(
@@ -1243,6 +1291,15 @@ def _validate_required_config(spec: dict) -> List[str]:
                 if not isinstance(fields, list) or not fields:
                     errors.append(
                         f"activity '{activity.get('key')}' UPDATECONTACT requires updateFields"
+                    )
+            elif activity_type == "DATAEXTENSIONUPDATE":
+                if not cfg.get("dataExtensionId"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' DATAEXTENSIONUPDATE requires dataExtensionId"
+                    )
+                if not cfg.get("field"):
+                    errors.append(
+                        f"activity '{activity.get('key')}' DATAEXTENSIONUPDATE requires field"
                     )
 
     return errors
