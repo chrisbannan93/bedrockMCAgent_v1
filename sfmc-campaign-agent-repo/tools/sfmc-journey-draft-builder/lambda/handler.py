@@ -660,6 +660,8 @@ def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) 
         return
 
     if cfg_dict is not None and args_dict is not None:
+        if label == "activity" and activity_type == "DATAEXTENSIONUPDATE":
+            return
         if args_dict != cfg_dict:
             warnings.append(
                 f"Ignored {label} arguments because configurationArguments are authoritative."
