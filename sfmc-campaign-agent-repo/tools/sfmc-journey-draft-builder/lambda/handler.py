@@ -639,6 +639,7 @@ def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) 
     cfg = item.get("configurationArguments")
     args_dict = args if isinstance(args, dict) else None
     cfg_dict = cfg if isinstance(cfg, dict) else None
+    activity_type = (item.get("type") or "").upper() if isinstance(item, dict) else ""
 
     if args is not None and args_dict is None:
         warnings.append(f"Ignored non-object arguments for {label}.")
@@ -653,6 +654,8 @@ def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) 
         return
 
     if cfg_dict is not None and args_dict is not None:
+        if label == "activity" and activity_type == "DATAEXTENSIONUPDATE":
+            return
         if args_dict != cfg_dict:
             warnings.append(
                 f"Ignored {label} arguments because configurationArguments are authoritative."
@@ -1020,6 +1023,23 @@ def _normalize_activity_defaults(activity: dict, warnings: List[str]) -> None:
         }
         activity["icon"] = icon_map.get(activity_type, "activity")
         warnings.append(f"Added default activity icon for '{activity.get('key')}'.")
+
+    activity_type = (activity.get("type") or "").upper()
+    if activity_type == "WAIT":
+        meta = activity.get("metaData")
+        if not isinstance(meta, dict):
+            meta = {}
+            activity["metaData"] = meta
+        if not meta.get("waitType"):
+            meta["waitType"] = "duration"
+            warnings.append(
+                f"Added metaData.waitType 'duration' for activity '{activity.get('key')}'."
+            )
+        if not meta.get("uiType"):
+            meta["uiType"] = "WAITBYDURATION"
+            warnings.append(
+                f"Added metaData.uiType 'WAITBYDURATION' for activity '{activity.get('key')}'."
+            )
 
 
 def _normalize_activity_configuration(
