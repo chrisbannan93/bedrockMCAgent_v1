@@ -51,6 +51,10 @@ You can send inputs in one of these shapes:
 - **API Gateway**: `body` contains a JSON string or object.
 - **Bedrock Action Group**: `actionGroupInvocationInput.parameters` + `requestBody.content.application/json`.
 
+## Naming constraints (SFMC)
+Avoid characters that SFMC may reject in asset or journey naming fields. Do not use:
+`* @ # ? | & < > " ' / \\ :`
+
 ### Required Journey Spec fields
 At minimum: `key`, `name`, `workflowApiVersion`, `triggers`, `activities`.
 
