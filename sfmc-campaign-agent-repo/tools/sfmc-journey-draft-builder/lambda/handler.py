@@ -608,7 +608,8 @@ def _normalize_type(value: Any, mapping: dict, warnings: List[str], label: str) 
 def _normalize_wait_unit(value: Any, warnings: List[str]) -> Any:
     if not isinstance(value, str):
         return value
-    key = value.strip().lower()
+    raw = value.strip()
+    key = raw.lower()
     if not key:
         return value
     mapping = {
@@ -628,10 +629,15 @@ def _normalize_wait_unit(value: Any, warnings: List[str]) -> Any:
         "month": "MONTHS",
     }
     mapped = mapping.get(key)
-    if mapped and mapped != value:
+    if not mapped:
+        return value
+    if raw.isupper():
+        mapped = mapped.upper()
+    elif raw.islower():
+        mapped = mapped.lower()
+    if mapped != value:
         warnings.append(f"Normalized waitUnit '{value}' to '{mapped}'.")
-        return mapped
-    return value
+    return mapped
 
 
 def _merge_configuration_arguments(item: dict, warnings: List[str], label: str) -> None:
@@ -816,14 +822,14 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
     if "workflowApiVersion" in spec:
         workflow_version = spec.get("workflowApiVersion")
         if isinstance(workflow_version, str):
-            try:
-                spec["workflowApiVersion"] = (
-                    float(workflow_version) if "." in workflow_version else int(workflow_version)
-                )
-                warnings.append("Coerced workflowApiVersion to numeric.")
-            except ValueError:
+            normalized = workflow_version.strip()
+            if not normalized:
                 spec["workflowApiVersion"] = 1.0
-                warnings.append("Invalid workflowApiVersion; defaulted to 1.0.")
+                warnings.append("workflowApiVersion was blank; defaulted to 1.0.")
+            else:
+                spec["workflowApiVersion"] = normalized
+                if normalized != workflow_version:
+                    warnings.append("Trimmed workflowApiVersion string value.")
     else:
         spec["workflowApiVersion"] = 1.0
         warnings.append("Added default workflowApiVersion 1.0.")
