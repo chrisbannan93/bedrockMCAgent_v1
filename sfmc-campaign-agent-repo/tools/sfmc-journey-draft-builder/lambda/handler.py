@@ -1273,6 +1273,13 @@ def _normalize_activity_configuration(
             warnings.append(
                 f"Copied emailActivityKey to refActivityCustomerKey for activity '{activity.get('key')}'."
             )
+        if not cfg.get("refActivityCustomerKey") and isinstance(activities, list) and activity_index is not None:
+            prev_email_key = _resolve_previous_email_key(activities, activity_index)
+            if prev_email_key:
+                cfg["refActivityCustomerKey"] = prev_email_key
+                warnings.append(
+                    f"Linked engagement decision '{activity.get('key')}' to email activity '{prev_email_key}'."
+                )
         if cfg.get("statsTypeId") is None:
             cfg["statsTypeId"] = 2
             warnings.append(
@@ -1342,6 +1349,11 @@ def _normalize_activity_configuration(
             cfg["dataExtensionId"] = cfg.get("dataExtensionKey")
             warnings.append(
                 f"Copied dataExtensionKey to dataExtensionId for activity '{activity.get('key')}'."
+            )
+        if not cfg.get("dataExtensionId") and cfg.get("dataExtensionName"):
+            cfg["dataExtensionId"] = cfg.get("dataExtensionName")
+            warnings.append(
+                f"Copied dataExtensionName to dataExtensionId for activity '{activity.get('key')}'."
             )
         fields = cfg.get("updateFields")
         if not cfg.get("field") and isinstance(fields, list) and fields:
@@ -1731,6 +1743,7 @@ def build_journey_draft(params: dict) -> Tuple[int, dict]:
 
     # Extract spec
     spec, spec_warnings = _extract_journey_spec(requested_inputs_raw)
+
     if not spec:
         return 400, {
             "ok": False,
