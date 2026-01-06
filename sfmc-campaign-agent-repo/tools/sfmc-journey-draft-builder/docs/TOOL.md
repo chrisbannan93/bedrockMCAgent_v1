@@ -1,66 +1,116 @@
 # sfmc-journey-draft-builder
 
 ## Purpose
-This tool validates a Journey Spec payload and can optionally create a draft Journey in the SFMC sandbox. It's designed to be a safe way to build and test journey structures before they are fully implemented.
+This tool validates a Journey Spec payload and can optionally create a **draft** Journey in SFMC. It is designed to make journey drafts nearly activation-ready by normalizing inputs, validating required configuration for common activity types, and (optionally) creating the entry event definition and the draft journey in SFMC.
 
-## Hard guardrails
-- **Dodo-only**: This tool is restricted to the "Dodo" brand.
-- **Sandbox-only**: All operations are restricted to the SFMC sandbox environment, enforced by the `SFMC_REQUIRED_ENV` environment variable.
-- **No production references**: The tool will block requests that point to production hosts.
-- **No live sends / activation / publish**: This tool can only create draft journeys. It cannot activate, publish, or send messages.
-- **Do not echo SFMC IDs in chat responses**: This is a global agent rule.
+## Guardrails
+- **Sandbox-only**: All operations are restricted to the SFMC environment specified by `SFMC_REQUIRED_ENV` (default: `sandbox`).
+- **Host allowlist (optional)**: If `SFMC_ALLOWED_HOST_SUFFIXES` is set, SFMC auth/rest hosts must match an allowed suffix.
+- **Account allowlist (optional)**: If `SFMC_ALLOWED_ACCOUNT_ID` is set, the token account must match.
+- **No activation/publish**: This tool can only create **draft** journeys. It cannot activate, publish, pause, or stop journeys.
+- **Size/cap guardrails**: Enforces maximum triggers, activities, and total payload size.
+
+> Note: “Dodo-only” is a **global agent policy** in this repo; it is not enforced in the Lambda code.
 
 ## Environment variables
 ### Required
-- `SFMC_SECRET_ARN` or `SFMC_SECRET_ID`: The ARN or ID of the AWS Secrets Manager secret containing SFMC API credentials.
-- `SFMC_ENV`: The current SFMC environment (e.g., "sandbox"). Must match `SFMC_REQUIRED_ENV`.
-- `SFMC_REQUIRED_ENV`: The required SFMC environment (e.g., "sandbox"). Defaults to "sandbox".
+- `SFMC_SECRET_ARN` or `SFMC_SECRET_ID`: AWS Secrets Manager reference containing SFMC API credentials.
+- `SFMC_ENV`: Current SFMC environment (e.g., `sandbox`). Must match `SFMC_REQUIRED_ENV`.
+- `SFMC_REQUIRED_ENV`: Required SFMC environment. Defaults to `sandbox`.
 
 ### Optional
-- `SFMC_ALLOWED_ACCOUNT_ID`: If set, the tool will only operate on the specified SFMC account ID.
-- `SFMC_ALLOWED_HOST_SUFFIXES`: A comma-separated list of allowed host suffixes for SFMC API calls (e.g., ".marketingcloudapps.com").
-- `DRY_RUN_DEFAULT`: Defaults to `true`. If `true`, the tool will only validate the journey spec and will not create a draft journey in SFMC unless `dryRun` is explicitly set to `false` in the request.
+- `SFMC_ALLOWED_ACCOUNT_ID`: Restrict to a specific SFMC account ID.
+- `SFMC_ALLOWED_HOST_SUFFIXES`: Comma-separated allowed host suffixes for SFMC API calls.
+- `DRY_RUN_DEFAULT`: Defaults to `true`. If `true`, the tool will validate only unless `dryRun=false` is provided.
+- `REST_TIMEOUT`: HTTP timeout in seconds (default: `20`).
+- `MAX_TRIGGERS`: Max triggers in the Journey Spec (default: `10`).
+- `MAX_ACTIVITIES`: Max activities in the Journey Spec (default: `200`).
+- `MAX_SPEC_BYTES`: Max serialized Journey Spec size (default: `300000`).
 
 ## Operations
 
 ### POST `/journeydraft`
 - **`operationId`**: `journeyDraftBuild`
-- **Description**: Validates a Journey Spec payload. If `createInSfmc` is `true` and `dryRun` is `false`, it will also attempt to create a draft journey in SFMC.
+- **Description**: Validates a Journey Spec payload. If `createInSfmc=true` and `dryRun=false`, it will attempt to create a draft journey in SFMC.
+
+### POST `/journey-draft`
+- **`operationId`**: `journeyDraftBuildAliasDash`
+- **Description**: Alias for `/journeydraft`.
 
 ### POST `/draft`
 - **`operationId`**: `journeyDraftBuildAlias`
-- **Description**: An alias for `/journeydraft`.
+- **Description**: Alias for `/journeydraft`.
 
 ### GET `/healthz`
 - **`operationId`**: `healthz`
-- **Description**: A lightweight health check that verifies the tool's configuration and guardrails without making any calls to SFMC.
+- **Description**: Validates runtime configuration and guardrails without calling SFMC.
+
+## Input summary
+You can send inputs in one of these shapes:
+- **Direct invoke**: the event object *is* the params object.
+- **API Gateway**: `body` contains a JSON string or object.
+- **Bedrock Action Group**: `actionGroupInvocationInput.parameters` + `requestBody.content.application/json`.
+
+### Required Journey Spec fields
+At minimum: `key`, `name`, `workflowApiVersion`, `triggers`, `activities`.
+
+### Required config for common types
+- **EVENT trigger**: `configurationArguments.eventDefinitionKey`
+- **WAIT**: `configurationArguments.waitDuration` + `waitUnit`
+- **EMAILV2**: `configurationArguments.emailAssetId` or `configurationArguments.triggeredSend.emailId`
+- **EMAIL**: `configurationArguments.emailId`
+- **ENGAGEMENTSPLIT**: `criteria`, `waitDuration`, `waitUnit`, `emailActivityKey`
+- **ENGAGEMENTDECISION**: `refActivityCustomerKey`, `statsTypeId`
+- **UPDATECONTACT**: `dataExtensionKey` or `dataExtensionName`, plus `updateFields`
+- **DATAEXTENSIONUPDATE**: `dataExtensionId`, `field`
+
+## Entry event definition support
+If `entryEventDefinition` (or `eventDefinition` / `eventDefinitionPayload`) is supplied, the tool can create the event definition in SFMC **before** creating the journey draft. The `eventDefinitionKey` (or `key`) is required.
 
 ## Examples
 
-### Validate a Journey Spec (dry run)
+### Direct invoke (local testing)
 ```json
 {
-  "apiPath": "/journeydraft",
-  "httpMethod": "POST",
-  "requestBody": {
-    "content": {
-      "application/json": {
-        "body": "{\\"journeySpec\\": {\\"key\\": \\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\\", \\"name\\": \\"Test Journey\\", \\"workflowApiVersion\\": \\"1.0\\", \\"triggers\\": [], \\"activities\\": []}}"
-      }
-    }
+  "createInSfmc": false,
+  "dryRun": true,
+  "journeySpec": {
+    "key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "name": "Test Journey",
+    "workflowApiVersion": "1.0",
+    "triggers": [],
+    "activities": []
   }
 }
 ```
 
-### Create a Draft Journey in SFMC
+### API Gateway (POST /journeydraft)
 ```json
 {
-  "apiPath": "/journeydraft",
   "httpMethod": "POST",
-  "requestBody": {
-    "content": {
-      "application/json": {
-        "body": "{\\"createInSfmc\\": true, \\"dryRun\\": false, \\"journeySpec\\": {\\"key\\": \\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\\", \\"name\\": \\"Test Journey\\", \\"workflowApiVersion\\": \\"1.0\\", \\"triggers\\": [], \\"activities\\": []}}"
+  "path": "/journeydraft",
+  "headers": {"Content-Type": "application/json"},
+  "body": "{\"createInSfmc\": false, \"dryRun\": true, \"journeySpec\": {\"key\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\", \"name\": \"Test Journey\", \"workflowApiVersion\": \"1.0\", \"triggers\": [], \"activities\": []}}"
+}
+```
+
+### Bedrock Action Group
+```json
+{
+  "actionGroup": "sfmc-journey-draft-builder",
+  "messageVersion": "1.0",
+  "actionGroupInvocationInput": {
+    "apiPath": "/journeydraft",
+    "verb": "POST",
+    "parameters": [
+      {"name": "createInSfmc", "value": "false", "type": "boolean"},
+      {"name": "dryRun", "value": "true", "type": "boolean"}
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "body": "{\"journeySpec\": {\"key\": \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\", \"name\": \"Test Journey\", \"workflowApiVersion\": \"1.0\", \"triggers\": [], \"activities\": []}}"
+        }
       }
     }
   }
