@@ -1337,7 +1337,13 @@ def _normalize_activity_configuration(
         fields = cfg.get("updateFields")
         if not cfg.get("field") and isinstance(fields, list) and fields:
             first = fields[0] if isinstance(fields[0], dict) else {}
-            field_id = first.get("field") or first.get("fieldId") or first.get("id") or first.get("fieldName")
+            field_id = (
+                first.get("field")
+                or first.get("fieldId")
+                or first.get("id")
+                or first.get("fieldName")
+                or first.get("name")
+            )
             if field_id:
                 cfg["field"] = field_id
                 warnings.append(

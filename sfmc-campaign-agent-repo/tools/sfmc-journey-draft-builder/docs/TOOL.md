@@ -61,8 +61,8 @@ At minimum: `key`, `name`, `workflowApiVersion`, `triggers`, `activities`.
 - **EMAIL**: `configurationArguments.emailId`
 - **ENGAGEMENTSPLIT**: `criteria`, `waitDuration`, `waitUnit`, `emailActivityKey`
 - **ENGAGEMENTDECISION**: `refActivityCustomerKey`, `statsTypeId`
-- **UPDATECONTACT**: `dataExtensionKey` or `dataExtensionName`, plus `updateFields`
-- **DATAEXTENSIONUPDATE**: `dataExtensionId`, `field`
+- **UPDATECONTACT**: `dataExtensionKey` or `dataExtensionName`, plus `updateFields` (first item should include `field`/`fieldName`/`name` so it can be promoted to `field`).
+- **DATAEXTENSIONUPDATE**: `dataExtensionId`, `field` (auto-copied from `updateFields[0].field|fieldName|fieldId|id|name` when present).
 
 ## Entry event definition support
 If `entryEventDefinition` (or `eventDefinition` / `eventDefinitionPayload`) is supplied, the tool can create the event definition in SFMC **before** creating the journey draft. The `eventDefinitionKey` (or `key`) is required.
