@@ -74,14 +74,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": ["status", "service", "version"],
-                  "properties": {
-                    "status": { "type": "string" },
-                    "service": { "type": "string" },
-                    "version": { "type": "string" }
-                  },
-                  "additionalProperties": true
+                  "type": "string",
+                  "description": "JSON-encoded response body returned by the Lambda action group handler."
                 }
               }
             }
