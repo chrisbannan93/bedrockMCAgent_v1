@@ -854,6 +854,7 @@ def _normalize_journey_spec(spec: dict, warnings: List[str]) -> dict:
         "engagementdecision": "EngagementDecision",
         "updatecontact": "DataExtensionUpdate",
         "dataextensionupdate": "DataExtensionUpdate",
+        "exit": "Exit",
     }
 
     triggers = spec.get("triggers")
@@ -944,6 +945,13 @@ def _ensure_default_outcomes(spec: dict, warnings: List[str]) -> dict:
             continue
         outcomes = activity.get("outcomes")
         if isinstance(outcomes, list) and outcomes:
+            continue
+        activity_type = (activity.get("type") or "").strip().lower()
+        if activity_type == "exit":
+            activity["outcomes"] = []
+            warnings.append(
+                f"Added empty outcomes for terminal activity '{activity.get('key')}'."
+            )
             continue
         next_key = activity_keys[idx + 1] if idx + 1 < len(activity_keys) else None
         if next_key:
@@ -1043,6 +1051,7 @@ def _normalize_activity_defaults(activity: dict, warnings: List[str]) -> None:
             "ENGAGEMENTDECISION": "split",
             "UPDATECONTACT": "update",
             "DATAEXTENSIONUPDATE": "update",
+            "EXIT": "exit",
         }
         activity["icon"] = icon_map.get(activity_type, "activity")
         warnings.append(f"Added default activity icon for '{activity.get('key')}'.")
