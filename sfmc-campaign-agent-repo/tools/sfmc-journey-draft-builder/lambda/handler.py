@@ -613,20 +613,20 @@ def _normalize_wait_unit(value: Any, warnings: List[str]) -> Any:
     if not key:
         return value
     mapping = {
-        "minutes": "minutes",
-        "minute": "minutes",
-        "mins": "minutes",
-        "min": "minutes",
-        "hours": "hours",
-        "hour": "hours",
-        "hrs": "hours",
-        "hr": "hours",
-        "days": "days",
-        "day": "days",
-        "weeks": "weeks",
-        "week": "weeks",
-        "months": "months",
-        "month": "months",
+        "minutes": "MINUTES",
+        "minute": "MINUTES",
+        "mins": "MINUTES",
+        "min": "MINUTES",
+        "hours": "HOURS",
+        "hour": "HOURS",
+        "hrs": "HOURS",
+        "hr": "HOURS",
+        "days": "DAYS",
+        "day": "DAYS",
+        "weeks": "WEEKS",
+        "week": "WEEKS",
+        "months": "MONTHS",
+        "month": "MONTHS",
     }
     mapped = mapping.get(key)
     if not mapped:
