@@ -548,12 +548,13 @@ def _invoke_claude(model_id: str, prompt: str, max_tokens: int, temperature: flo
     return ""
 
 
-def _build_writer_prompt(req: dict, rag_sources: List[dict]) -> str:
+def _build_writer_prompt(req: dict, rag_sources: List[dict], template_html: str) -> str:
     """
     Request BASE64 HTML for JSON stability; discourage giant boilerplate.
     """
     brief = (req.get("brief") or "").strip()
     normalized_brief = req.get("normalizedBrief")
+    wants_template = bool(template_html)
 
     if not brief and normalized_brief:
         try:
@@ -581,6 +582,19 @@ def _build_writer_prompt(req: dict, rag_sources: List[dict]) -> str:
             )
         rag_block = "\n\n".join(lines)
 
+    html_instructions = """
+CRITICAL OUTPUT RULE:
+- The "html" field MUST be BASE64-encoded HTML (UTF-8) AND MUST be a single line with NO spaces, NO \\n, NO \\r, NO \\t.
+"""
+
+    if wants_template:
+        html_instructions = """
+CRITICAL OUTPUT RULE:
+- The "html" field MUST be BASE64-encoded HTML (UTF-8) of ONLY the body content (no <html>, <head>, or <body> tags).
+- The body content will be injected into a fixed container template. Do NOT include outer document wrappers.
+- The "html" field MUST be a single line with NO spaces, NO \\n, NO \\r, NO \\t.
+"""
+
     return f"""
 You are an internal SFMC SANDBOX email copy + HTML composer for the AU brand "Dodo" (telecommunications).
 You MUST output ONLY a single valid JSON object (no markdown, no commentary, no code fences, no extra text).
@@ -594,8 +608,7 @@ Hard rules:
 - IMPORTANT: Keep the email reasonably compact. Do NOT paste huge boilerplate/footer/navigation blocks.
   If a footer is needed, keep it minimal. Aim to keep raw HTML under ~10KB.
 
-CRITICAL OUTPUT RULE:
-- The "html" field MUST be BASE64-encoded HTML (UTF-8) AND MUST be a single line with NO spaces, NO \\n, NO \\r, NO \\t.
+{html_instructions}
 
 Return JSON with EXACT keys:
 {{
@@ -734,6 +747,62 @@ def _as_html_plain_and_b64(model_html_field: str) -> Tuple[str, str, bool]:
     return html_plain, html_b64, False
 
 
+def _extract_body_fragment(html: str) -> Tuple[str, bool]:
+    if not html:
+        return "", False
+    m = re.search(r"<body[^>]*>(?P<body>[\s\S]*?)</body>", html, flags=re.IGNORECASE)
+    if m:
+        return m.group("body").strip(), True
+    return html, False
+
+
+def _apply_template(
+    template_html: str,
+    body_html: str,
+    slot_key: str,
+    slot_label: str,
+) -> Tuple[str, List[str]]:
+    warnings: List[str] = []
+    if not template_html:
+        return body_html, warnings
+
+    placeholder = "{{BODY_HTML}}"
+    if placeholder not in template_html:
+        slot_key = (slot_key or "").strip()
+        slot_label = (slot_label or "").strip()
+        slot_pattern = ""
+        if slot_key:
+            slot_pattern = rf"<div\s+[^>]*data-type=\"slot\"[^>]*data-key=\"{re.escape(slot_key)}\"[^>]*>\s*</div>"
+        elif slot_label:
+            slot_pattern = rf"<div\s+[^>]*data-type=\"slot\"[^>]*data-label=\"{re.escape(slot_label)}\"[^>]*>\s*</div>"
+        if not slot_pattern:
+            warnings.append(
+                "templateHtml provided but missing {{BODY_HTML}} placeholder; returning generated HTML only."
+            )
+            return body_html, warnings
+
+        slot_match = re.search(slot_pattern, template_html, flags=re.IGNORECASE)
+        if not slot_match:
+            warnings.append(
+                "templateHtml provided but slot placeholder not found; returning generated HTML only."
+            )
+            return body_html, warnings
+
+        body_fragment, extracted = _extract_body_fragment(body_html)
+        if extracted:
+            warnings.append("Template mode: stripped outer <body> wrapper from model HTML before injection.")
+
+        slot_html = slot_match.group(0)
+        injected_slot = slot_html.replace("</div>", f"{body_fragment}</div>", 1)
+        return template_html.replace(slot_html, injected_slot, 1), warnings
+
+    body_fragment, extracted = _extract_body_fragment(body_html)
+    if extracted:
+        warnings.append("Template mode: stripped outer <body> wrapper from model HTML before injection.")
+
+    return template_html.replace(placeholder, body_fragment), warnings
+
+
 # -----------------------------
 # Operations
 # -----------------------------
@@ -747,6 +816,9 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
         return 400, {"error": "Provide brief OR normalizedBrief."}
 
     use_kb = req.get("useKnowledgeBase")
+    template_html = (req.get("templateHtml") or "").strip()
+    template_slot_key = (req.get("templateSlotKey") or "").strip()
+    template_slot_label = (req.get("templateSlotLabel") or "").strip()
     kb_id_override = (req.get("kbId") or "").strip()
 
     if kb_id_override:
@@ -780,7 +852,7 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
     max_tokens = _clamp_int(req.get("maxTokens"), 3600, 200, 4000)
     temperature = _clamp_float(req.get("temperature"), 0.4, 0.0, 1.0)
 
-    prompt = _build_writer_prompt(req, rag_sources)
+    prompt = _build_writer_prompt(req, rag_sources, template_html)
 
     try:
         txt = _invoke_claude(model_id, prompt, max_tokens=max_tokens, temperature=temperature).strip()
@@ -817,6 +889,23 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
 
     html_plain, html_b64, model_returned_b64 = _as_html_plain_and_b64(html_field)
 
+    return_b64 = _truthy(req.get("returnHtmlB64"))
+    extra: List[str] = []
+    if not model_returned_b64 and html_plain:
+        extra.append("Writer returned raw HTML; normalized to base64 for safety.")
+    if model_returned_b64 and html_field and re.search(r"\s", html_field):
+        extra.append("Writer returned base64 with whitespace; whitespace stripped for decoding/safety.")
+
+    template_warnings: List[str] = []
+    if template_html:
+        html_plain, template_warnings = _apply_template(
+            template_html,
+            html_plain,
+            template_slot_key,
+            template_slot_label,
+        )
+        html_b64 = base64.b64encode(html_plain.encode("utf-8")).decode("utf-8") if html_plain else ""
+
     max_html_chars = _clamp_int(os.getenv("MAX_HTML_CHARS", "200000"), 200000, 10000, 1000000)
     if html_plain and len(html_plain) > max_html_chars:
         return 500, {
@@ -824,17 +913,10 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
             "message": f"HTML exceeded MAX_HTML_CHARS ({max_html_chars}).",
             "ragUsed": bool(rag_sources),
             "ragSources": rag_sources,
-            "warnings": rag_warnings + writer_warnings + ["HTML too large; ask the model to be more compact."],
+            "warnings": rag_warnings + writer_warnings + extra + template_warnings + ["HTML too large; ask the model to be more compact."],
         }
 
-    return_b64 = _truthy(req.get("returnHtmlB64"))
     html_out = html_b64 if return_b64 else html_plain
-
-    extra: List[str] = []
-    if not model_returned_b64 and html_plain:
-        extra.append("Writer returned raw HTML; normalized to base64 for safety.")
-    if model_returned_b64 and html_field and re.search(r"\s", html_field):
-        extra.append("Writer returned base64 with whitespace; whitespace stripped for decoding/safety.")
 
     if not subject or not html_out:
         return 500, {
@@ -842,7 +924,7 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
             "message": "subject and html are required.",
             "ragUsed": bool(rag_sources),
             "ragSources": rag_sources,
-            "warnings": rag_warnings + writer_warnings + extra,
+            "warnings": rag_warnings + writer_warnings + extra + template_warnings,
         }
 
     asset_name = (req.get("assetName") or req.get("name") or "").strip()
@@ -863,7 +945,7 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
         "htmlIsB64": bool(return_b64),
         "ragUsed": bool(rag_sources),
         "ragSources": rag_sources,
-        "warnings": rag_warnings + writer_warnings + extra,
+        "warnings": rag_warnings + writer_warnings + extra + template_warnings,
         "emailBlueprint": {
             "name": asset_name,
             "folderPath": folder_path,
@@ -875,7 +957,7 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
             **({"textContent": text_content} if text_content else {}),
             "ragUsed": bool(rag_sources),
             "ragSources": rag_sources,
-            "warnings": rag_warnings + writer_warnings + extra,
+            "warnings": rag_warnings + writer_warnings + extra + template_warnings,
         },
     }
 

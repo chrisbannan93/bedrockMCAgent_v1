@@ -116,6 +116,18 @@
           "returnHtmlB64": { "type": "boolean", "default": false },
           "personalizationTokens": { "type": "array", "items": { "type": "string" } },
           "requiredBlocks": { "type": "array", "items": { "type": "string" } },
+          "templateHtml": {
+            "type": "string",
+            "description": "Optional HTML container with a {{BODY_HTML}} placeholder or Content Builder slot. When provided, the model returns body-only HTML which is injected into this template."
+          },
+          "templateSlotKey": {
+            "type": "string",
+            "description": "Optional data-key for a <div data-type=\"slot\"> placeholder when {{BODY_HTML}} is not present."
+          },
+          "templateSlotLabel": {
+            "type": "string",
+            "description": "Optional data-label for a <div data-type=\"slot\"> placeholder when {{BODY_HTML}} is not present."
+          },
           "assetName": { "type": "string", "description": "Optional asset name to include in emailBlueprint." },
           "name": { "type": "string", "description": "Alias for assetName." },
           "folderPath": { "type": "string", "description": "Optional folder path to include in emailBlueprint (used downstream by asset writer)."},

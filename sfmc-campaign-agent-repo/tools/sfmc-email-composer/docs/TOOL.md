@@ -53,6 +53,9 @@ Generates:
 - `requiredLinks` (array)
 - `personalizationTokens` (array)
 - `requiredBlocks` (array)
+- `templateHtml` (string, optional) — full HTML container with a `{{BODY_HTML}}` placeholder or a Content Builder slot to inject into.
+- `templateSlotKey` (string, optional) — `data-key` value for a `<div data-type="slot" ...>` placeholder if `{{BODY_HTML}}` is not present.
+- `templateSlotLabel` (string, optional) — `data-label` value for a `<div data-type="slot" ...>` placeholder if `{{BODY_HTML}}` is not present.
 
 #### RAG behavior
 One of:
@@ -64,6 +67,13 @@ The tool **rejects** `ragContext` entries that look like non-style metadata (ref
 #### Output HTML mode
 - If `returnHtmlB64=true`, response `html` will be base64 and `htmlIsB64=true`.
 - If `returnHtmlB64=false`, response `html` will be plain HTML and `htmlIsB64=false`.
+
+#### Template mode (optional)
+If `templateHtml` is provided:
+- It must include a `{{BODY_HTML}}` placeholder.
+- If no `{{BODY_HTML}}` placeholder is present, the tool will try to inject into a `<div data-type="slot">` using `templateSlotKey` (preferred) or `templateSlotLabel`.
+- The model is instructed to return **body-only HTML** (no `<html>`, `<head>`, or `<body>` tags).
+- The tool injects the generated body into the template and returns the final HTML.
 
 ---
 
