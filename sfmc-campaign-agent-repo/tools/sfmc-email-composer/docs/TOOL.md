@@ -53,6 +53,7 @@ Generates:
 - `requiredLinks` (array)
 - `personalizationTokens` (array)
 - `requiredBlocks` (array)
+- `templateHtml` (string, optional) — full HTML container with a `{{BODY_HTML}}` placeholder. When provided, the model returns body-only HTML which is injected into this template.
 
 #### RAG behavior
 One of:
@@ -64,6 +65,12 @@ The tool **rejects** `ragContext` entries that look like non-style metadata (ref
 #### Output HTML mode
 - If `returnHtmlB64=true`, response `html` will be base64 and `htmlIsB64=true`.
 - If `returnHtmlB64=false`, response `html` will be plain HTML and `htmlIsB64=false`.
+
+#### Template mode (optional)
+If `templateHtml` is provided:
+- It must include a `{{BODY_HTML}}` placeholder.
+- The model is instructed to return **body-only HTML** (no `<html>`, `<head>`, or `<body>` tags).
+- The tool injects the generated body into the template and returns the final HTML.
 
 ---
 

@@ -116,6 +116,10 @@
           "returnHtmlB64": { "type": "boolean", "default": false },
           "personalizationTokens": { "type": "array", "items": { "type": "string" } },
           "requiredBlocks": { "type": "array", "items": { "type": "string" } },
+          "templateHtml": {
+            "type": "string",
+            "description": "Optional HTML container with a {{BODY_HTML}} placeholder. When provided, the model returns body-only HTML which is injected into this template."
+          },
           "assetName": { "type": "string", "description": "Optional asset name to include in emailBlueprint." },
           "name": { "type": "string", "description": "Alias for assetName." },
           "folderPath": { "type": "string", "description": "Optional folder path to include in emailBlueprint (used downstream by asset writer)."},
