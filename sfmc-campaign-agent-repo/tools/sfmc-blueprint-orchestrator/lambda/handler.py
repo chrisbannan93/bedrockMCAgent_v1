@@ -310,9 +310,16 @@ def generate_blueprint(params: Dict[str, Any]) -> Tuple[dict, List[str]]:
 
     include_rationale = bool(params.get("includeRationale", False))
 
-    folder_root_override = params.get("folderRoot") or (normalized_obj or {}).get("folderRoot")
+    folder_root_override = (
+        params.get("folderRoot")
+        or params.get("contentBuilderFolderRoot")
+        or (normalized_obj or {}).get("folderRoot")
+    )
     email_folder_override = (
         params.get("emailFolder")
+        or params.get("contentBuilderFolder")
+        or params.get("contentBuilderFolderPath")
+        or params.get("folderPath")
         or (normalized_obj or {}).get("emailFolder")
         or (normalized_obj or {}).get("contentBuilderFolder")
         or folder_hint
@@ -436,15 +443,35 @@ def generate_blueprint(params: Dict[str, Any]) -> Tuple[dict, List[str]]:
         {"step": 3, "tool": "sfmc-automation-inspector", "description": "Inspect existing automations for audience refresh patterns."},
     ]
     if any(a.get("type") == "email" for a in assets):
-        execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-email-composer", "description": "Compose email copy/HTML first; request base64 HTML for asset creation."})
+        composer_step = len(execution_plan) + 1
+        resolve_step = composer_step + 1
+        writer_step = resolve_step + 1
+        execution_plan.append({
+            "step": composer_step,
+            "tool": "sfmc-email-composer",
+            "description": "Compose email copy/HTML first; request base64 HTML for asset creation.",
+            "outputs": ["subject", "preheader", "htmlContentB64", "emailBlueprint"],
+        })
         resolve_desc = "Resolve Content Builder folder path to categoryId (requested folder when provided)."
         if not content_builder_folder_requested:
             resolve_desc = "Resolve default Content Builder folder path to categoryId."
-        execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-asset-search", "description": resolve_desc})
         execution_plan.append({
-            "step": len(execution_plan)+1,
+            "step": resolve_step,
+            "tool": "sfmc-asset-search",
+            "description": resolve_desc,
+            "inputs": {"folderPath": folders["emails"], "createIfMissing": True},
+            "outputs": ["categoryId"],
+        })
+        execution_plan.append({
+            "step": writer_step,
             "tool": "sfmc-email-asset-writer",
-            "description": "Create draft Email asset(s) using categoryId + subject + preheader + htmlContentB64."
+            "description": "Create draft Email asset(s) using categoryId + subject + preheader + htmlContentB64.",
+            "inputs": {
+                "categoryId": "{{resolveFolder.categoryId}}",
+                "subject": "{{composeEmail.subject}}",
+                "preheader": "{{composeEmail.preheader}}",
+                "htmlContentB64": "{{composeEmail.htmlContentB64}}",
+            },
         })
     if journeys:
         execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-journey-draft-builder", "description": "Create Journey draft aligned to blueprint steps."})
