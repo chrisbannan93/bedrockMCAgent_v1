@@ -25,8 +25,8 @@ Bedrock Agent
 
 **Email flow (draft-only):**
 1. `sfmc-brief-normalizer` (optional) → normalize brief
-2. `sfmc-asset-search` (using `/resolveFolder`) → resolve/create safe folder and return `categoryId`
-3. `sfmc-email-composer` → generate email content + `emailBlueprint`
+2. `sfmc-email-composer` → generate email content + `emailBlueprint`
+3. `sfmc-asset-search` (using `/resolveFolder`) → resolve/create requested (or default) folder and return `categoryId`
 4. `sfmc-email-asset-writer` → create a draft Content Builder asset
 
 **Orchestration:** The **Bedrock Agent** chains calls. Lambdas must **not** call other Lambdas.

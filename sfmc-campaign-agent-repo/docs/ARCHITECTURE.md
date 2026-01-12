@@ -5,8 +5,8 @@ This repo contains multiple Bedrock “action group” tools (Lambdas + OpenAPI 
 ## Typical flow (email draft + asset)
 1. brief-normalizer (optional): normalize messy brief
 2. inspectors (optional): inspect existing config (assets, DEs, journeys, automations)
-3. sfmc-asset-search /resolveFolder: resolve/create safe-zone folder -> categoryId
-4. email-composer: compose subject/preheader/html (optionally using KB RAG)
+3. email-composer: compose subject/preheader/html (optionally using KB RAG)
+4. sfmc-asset-search /resolveFolder: resolve requested or default safe-zone folder -> categoryId
 5. email-asset-writer: create draft HTML Email asset in Content Builder using categoryId + emailBlueprint
 
 ## Guardrails

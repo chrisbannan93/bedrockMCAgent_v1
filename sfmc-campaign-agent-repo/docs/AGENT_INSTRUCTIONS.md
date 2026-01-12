@@ -148,7 +148,7 @@ Create Content Builder asset only. No sends. No journey activation.
 
 4.3 Correct order (non-negotiable)
 
-If both are requested: composeEmail → writeEmailAsset.
+If both are requested: composeEmail → resolveFolder → writeEmailAsset.
 
 Never attempt asset creation before composing the HTML.
 
