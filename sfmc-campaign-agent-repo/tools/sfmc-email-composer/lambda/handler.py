@@ -756,15 +756,45 @@ def _extract_body_fragment(html: str) -> Tuple[str, bool]:
     return html, False
 
 
-def _apply_template(template_html: str, body_html: str) -> Tuple[str, List[str]]:
+def _apply_template(
+    template_html: str,
+    body_html: str,
+    slot_key: str,
+    slot_label: str,
+) -> Tuple[str, List[str]]:
     warnings: List[str] = []
     if not template_html:
         return body_html, warnings
 
     placeholder = "{{BODY_HTML}}"
     if placeholder not in template_html:
-        warnings.append("templateHtml provided but missing {{BODY_HTML}} placeholder; returning generated HTML only.")
-        return body_html, warnings
+        slot_key = (slot_key or "").strip()
+        slot_label = (slot_label or "").strip()
+        slot_pattern = ""
+        if slot_key:
+            slot_pattern = rf"<div\s+[^>]*data-type=\"slot\"[^>]*data-key=\"{re.escape(slot_key)}\"[^>]*>\s*</div>"
+        elif slot_label:
+            slot_pattern = rf"<div\s+[^>]*data-type=\"slot\"[^>]*data-label=\"{re.escape(slot_label)}\"[^>]*>\s*</div>"
+        if not slot_pattern:
+            warnings.append(
+                "templateHtml provided but missing {{BODY_HTML}} placeholder; returning generated HTML only."
+            )
+            return body_html, warnings
+
+        slot_match = re.search(slot_pattern, template_html, flags=re.IGNORECASE)
+        if not slot_match:
+            warnings.append(
+                "templateHtml provided but slot placeholder not found; returning generated HTML only."
+            )
+            return body_html, warnings
+
+        body_fragment, extracted = _extract_body_fragment(body_html)
+        if extracted:
+            warnings.append("Template mode: stripped outer <body> wrapper from model HTML before injection.")
+
+        slot_html = slot_match.group(0)
+        injected_slot = slot_html.replace("</div>", f"{body_fragment}</div>", 1)
+        return template_html.replace(slot_html, injected_slot, 1), warnings
 
     body_fragment, extracted = _extract_body_fragment(body_html)
     if extracted:
@@ -787,6 +817,8 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
 
     use_kb = req.get("useKnowledgeBase")
     template_html = (req.get("templateHtml") or "").strip()
+    template_slot_key = (req.get("templateSlotKey") or "").strip()
+    template_slot_label = (req.get("templateSlotLabel") or "").strip()
     kb_id_override = (req.get("kbId") or "").strip()
 
     if kb_id_override:
@@ -866,7 +898,12 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
 
     template_warnings: List[str] = []
     if template_html:
-        html_plain, template_warnings = _apply_template(template_html, html_plain)
+        html_plain, template_warnings = _apply_template(
+            template_html,
+            html_plain,
+            template_slot_key,
+            template_slot_label,
+        )
         html_b64 = base64.b64encode(html_plain.encode("utf-8")).decode("utf-8") if html_plain else ""
 
     max_html_chars = _clamp_int(os.getenv("MAX_HTML_CHARS", "200000"), 200000, 10000, 1000000)
