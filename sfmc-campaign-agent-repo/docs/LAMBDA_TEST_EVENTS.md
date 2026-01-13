@@ -272,7 +272,7 @@ Source: `tools/sfmc-email-asset-writer/tests/event-bedrock.json`
 }
 ```
 
-## sfmc-email-composer
+## sfmc-email-composer (KB RAG required)
 
 Source: `tools/sfmc-email-composer/tests/event-bedrock.json`
 

@@ -80,7 +80,7 @@ Do not invent names, keys, IDs, schemas, or folder paths.
 4) Email composition + asset creation pipeline (CRITICAL)
 Tools involved (ONLY these — do not invent others)
 
-sfmc-email-composer::composeEmail (POST /composeEmail)
+sfmc-email-composer::composeEmail (POST /composeEmail, KB RAG required)
 
 sfmc-email-asset-writer::writeEmailAsset (POST /writeEmailAsset)
 
@@ -90,7 +90,7 @@ No legacy asset-creation endpoint is supported; use sfmc-email-asset-writer only
 
 When asked to write a Dodo email (subject / preheader / HTML):
 
-Call sfmc-email-composer::composeEmail first.
+Call sfmc-email-composer::composeEmail first (KB RAG required).
 
 Always include:
 
@@ -112,7 +112,7 @@ Do NOT invent or generate “ragContext reflections”, scores, or XML structure
 
 Only provide ragContext if it contains actual style snippets (strings or small objects with excerpt/sourceUri).
 
-If you don’t have real style snippets, omit ragContext and let the tool retrieve from its KB.
+If you don’t have real style snippets, omit ragContext and let the tool retrieve from its KB (KB RAG is required).
 
 4.2 Create Draft SFMC Asset (optional step 2, only when requested)
 
@@ -208,7 +208,7 @@ Purpose: read-only DE metadata + schema inspection.
 
 Purpose: read-only inspection of Automation Studio entities.
 
-6.7 Email Composer — sfmc-email-composer
+6.7 Email Composer — sfmc-email-composer (must use KB RAG)
 
 Purpose: Compose sandbox-safe Dodo email drafts and optionally create a draft HTML Email asset.
 Allowed operations only:
@@ -222,6 +222,8 @@ Dodo-only
 Sandbox-only
 
 Draft creation only
+
+KB RAG required (use KB retrieval for composeEmail)
 
 If base64 requested: set returnHtmlB64=true
 
@@ -257,7 +259,7 @@ Example A — “Return HTML as base64”
 User: “Create a Dodo email reminding customers their bill is due soon. Return the HTML as base64.”
 Agent MUST:
 
-Call sfmc-email-composer::composeEmail with brand="Dodo", brief="...", returnHtmlB64=true
+Call sfmc-email-composer::composeEmail with brand="Dodo", brief="...", returnHtmlB64=true (KB RAG required)
 
 Return the html field (base64) + subject + preheader.
 

@@ -2,7 +2,7 @@
 
 Dodo-only, sandbox-only tool for creating **draft** HTML Email assets in SFMC Content Builder.
 
-This tool is designed to take the `emailBlueprint` output from `sfmc-email-composer` plus a `categoryId` returned by `sfmc-asset-search` `/resolveFolder`.
+This tool is designed to take the `emailBlueprint` output from `sfmc-email-composer` (KB RAG required) plus a `categoryId` returned by `sfmc-asset-search` `/resolveFolder`.
 
 ---
 
@@ -27,7 +27,7 @@ Creates a **draft** HTML Email asset in Content Builder.
 #### Required
 - `categoryId`: folder/category id (must be >= 1) from `sfmc-asset-search` `/resolveFolder`
 - Either:
-  - `emailBlueprint` (from `sfmc-email-composer`), OR
+  - `emailBlueprint` (from `sfmc-email-composer`, KB RAG required), OR
   - direct fields: `name`, `subject`, `preheader`, and `htmlContent` or `htmlContentB64`
 
 #### Notes
@@ -60,7 +60,7 @@ Creates a **draft** HTML Email asset in Content Builder.
 
 Typical sequence for “create a draft email asset”:
 1) `sfmc-brief-normalizer` (if brief is messy)
-2) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`)
+2) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`, KB RAG required)
 3) `sfmc-asset-search` `/resolveFolder` → returns `categoryId` (requested or default folder)
 4) `sfmc-email-asset-writer` `/writeEmailAsset` using `categoryId` + subject + preheader + htmlContentB64 (from composer/emailBlueprint)
 

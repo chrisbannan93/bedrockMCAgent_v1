@@ -25,7 +25,7 @@ Bedrock Agent
 
 **Email flow (draft-only):**
 1. `sfmc-brief-normalizer` (optional) → normalize brief
-2. `sfmc-email-composer` → generate email content + `emailBlueprint`
+2. `sfmc-email-composer` → generate email content + `emailBlueprint` (must use KB RAG)
 3. `sfmc-asset-search` (using `/resolveFolder`) → resolve/create requested (or default) folder and return `categoryId`
 4. `sfmc-email-asset-writer` → create a draft Content Builder asset using `categoryId` + subject + preheader + base64 HTML
 
@@ -53,7 +53,7 @@ Each tool has:
 | `sfmc-data-extension-inspector` | Inspect DE schema + sample rows | Read-only |
 | `sfmc-automation-inspector` | Inspect Automation Studio | Read-only |
 | `sfmc-journey-inspector` | Inspect Journey Builder | Read-only |
-| `sfmc-email-composer` | Generate email copy + HTML + `emailBlueprint` | Read-only |
+| `sfmc-email-composer` | Generate email copy + HTML + `emailBlueprint` (must use KB RAG) | Read-only |
 | `sfmc-email-asset-writer` | Create draft HTML Email asset from blueprint | Write (safe-zone only) |
 
 ### Not yet in Bedrock
