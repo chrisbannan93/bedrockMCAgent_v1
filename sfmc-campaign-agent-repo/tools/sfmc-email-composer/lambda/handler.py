@@ -449,7 +449,7 @@ def _sfmc_request(method: str, url: str, access_token: str, json_body: Optional[
 def _retrieve_style(kb_id: str, query_text: str, num_results: int) -> Tuple[List[dict], List[str]]:
     warnings: List[str] = []
     if not kb_id:
-        return [], ["No kbId provided; proceeding without RAG."]
+        return [], ["KB RAG required but no kbId provided."]
 
     try:
         resp = bedrock_agent_rt.retrieve(
@@ -469,7 +469,7 @@ def _retrieve_style(kb_id: str, query_text: str, num_results: int) -> Tuple[List
             )
         return sources, warnings
     except Exception:
-        warnings.append("RAG retrieve failed; proceeding without RAG.")
+        warnings.append("RAG retrieve failed; KB RAG is required.")
         logger.exception("RAG retrieve error")
         return [], warnings
 
@@ -840,9 +840,13 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
     if sanitized_rc:
         rag_sources = _rag_sources_from_ragcontext(sanitized_rc)
     else:
+        if not resolved_kb_id:
+            return 400, {"error": "KB RAG required. Provide kbId or enable useKnowledgeBase."}
         query_text = f"Dodo SFMC email style guidance for: {brief}"
         rag_sources, kb_warnings = _retrieve_style(resolved_kb_id, query_text, rag_results)
         rag_warnings.extend(kb_warnings)
+        if not rag_sources and any("RAG retrieve failed" in w for w in kb_warnings):
+            return 502, {"error": "KB RAG retrieval failed.", "warnings": rag_warnings}
 
     model_id = (req.get("modelId") or "").strip() or os.getenv(
         "BEDROCK_WRITER_MODEL_ID",

@@ -59,10 +59,10 @@ Generates:
 
 #### RAG behavior
 One of:
-- Provide `ragContext` (array of strings or `{sourceUri, excerpt}` objects). If valid, it is used **instead of** KB retrieval.
-- Otherwise, if `useKnowledgeBase=true`, the tool retrieves from the KB ID in `EMAIL_STYLE_KB_ID` (or override with `kbId`).
+- Provide `ragContext` (array of strings or `{sourceUri, excerpt}` objects). If valid, it is used **instead of** KB retrieval (KB RAG requirement satisfied).
+- Otherwise, `useKnowledgeBase` must be true and the tool retrieves from the KB ID in `EMAIL_STYLE_KB_ID` (or override with `kbId`).
 
-The tool **rejects** `ragContext` entries that look like non-style metadata (reflection/XML/etc.), and falls back to KB retrieval.
+The tool **rejects** `ragContext` entries that look like non-style metadata (reflection/XML/etc.), and falls back to KB retrieval (required).
 
 #### Output HTML mode
 - If `returnHtmlB64=true`, response `html` will be base64 and `htmlIsB64=true`.
@@ -79,7 +79,7 @@ If `templateHtml` is provided:
 
 ## Environment variables
 
-### Optional (compose/RAG/model)
+### Required (compose/RAG/model)
 - `EMAIL_STYLE_KB_ID` (KB used when `useKnowledgeBase=true` and no `kbId` provided)
 - `BEDROCK_WRITER_MODEL_ID` (default: `anthropic.claude-3-sonnet-20240229-v1:0`)
 

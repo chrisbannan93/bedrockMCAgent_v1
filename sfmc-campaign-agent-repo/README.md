@@ -101,7 +101,7 @@ Minimum permissions (adjust per tool):
 - `secretsmanager:GetSecretValue`
 - `kms:Decrypt` (if secret encrypted)
 - Network egress to SFMC endpoints
-- Optional: `bedrock-agent-runtime:Retrieve` (only if a tool performs explicit KB retrieval)
+- Required for composer: `bedrock-agent-runtime:Retrieve` (KB retrieval is required for sfmc-email-composer)
 
 ### 4) Create Bedrock Action Group
 
@@ -161,7 +161,7 @@ Minimum permissions (adjust per tool):
 
 - SOAP property support differs by tenant/BUs; the Lambdas include fallback property sets where required.
 - REST pagination caps differ across endpoints; tools clamp `pageSize` and log warnings.
-- KB retrieval can be disabled in Lambdas; prefer Bedrock Agent’s native KB attachment unless explicitly required.
+- KB retrieval is required for sfmc-email-composer; ensure Bedrock Agent KB attachment is enabled or provide valid ragContext.
 
 ---
 
