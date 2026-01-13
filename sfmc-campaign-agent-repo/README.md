@@ -83,10 +83,11 @@ See `docs/CODEX_PLAYBOOK.md` for conventions.
 ### 1) Package a tool Lambda
 
 Each tool is standalone. Package the folder’s `lambda/` (and any bundled shared code) and deploy it as
-a Lambda function. Example:
+a Lambda function. Example (including shared helpers):
 
 ```
 cd tools/sfmc-email-composer
+cp ../shared/helpers.py lambda/helpers.py
 zip -r ../sfmc-email-composer.zip lambda
 ```
 
