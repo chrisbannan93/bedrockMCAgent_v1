@@ -522,6 +522,7 @@ def _create_email_asset(params: Dict[str, Any]) -> Tuple[int, dict]:
 
         return 200, {
             "created": True,
+            "message": "Draft asset created.",
             "categoryId": category_id,
             "assetId": asset_id,
             "warnings": warnings,

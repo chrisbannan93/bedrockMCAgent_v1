@@ -195,6 +195,9 @@ def _parse_bedrock_params(event: dict) -> Dict[str, Any]:
 _SECTION_RE = re.compile(
     r"(?mi)^\s*(goal|objective|audience|offer|incentive|timing|schedule|channels?|constraints?)\s*:\s*(.+?)\s*$"
 )
+_FOLDER_HINT_RE = re.compile(
+    r"(?mi)^\s*(content\s*builder\s*folder|contentbuilder\s*folder|folder\s*path|folder)\s*:\s*(.+?)\s*$"
+)
 
 def _parse_sections(brief: str) -> Dict[str, str]:
     out: Dict[str, str] = {}
@@ -206,6 +209,14 @@ def _parse_sections(brief: str) -> Dict[str, str]:
         if k and v:
             out[k] = v
     return out
+
+def _extract_folder_hint(brief: str) -> str:
+    if not brief:
+        return ""
+    match = _FOLDER_HINT_RE.search(brief)
+    if not match:
+        return ""
+    return (match.group(2) or "").strip()
 
 def _infer_channels(brief: str, explicit: Optional[List[str]]) -> List[str]:
     if isinstance(explicit, list) and explicit:
@@ -274,6 +285,7 @@ def generate_blueprint(params: Dict[str, Any]) -> Tuple[dict, List[str]]:
 
     brief_text = str(brief or "").strip()
     sections = _parse_sections(brief_text)
+    folder_hint = _extract_folder_hint(brief_text)
 
     campaign_name = (params.get("campaignName") or "").strip()
     if not campaign_name:
@@ -298,10 +310,26 @@ def generate_blueprint(params: Dict[str, Any]) -> Tuple[dict, List[str]]:
 
     include_rationale = bool(params.get("includeRationale", False))
 
+    folder_root_override = (
+        params.get("folderRoot")
+        or params.get("contentBuilderFolderRoot")
+        or (normalized_obj or {}).get("folderRoot")
+    )
+    email_folder_override = (
+        params.get("emailFolder")
+        or params.get("contentBuilderFolder")
+        or params.get("contentBuilderFolderPath")
+        or params.get("folderPath")
+        or (normalized_obj or {}).get("emailFolder")
+        or (normalized_obj or {}).get("contentBuilderFolder")
+        or folder_hint
+    )
+    content_builder_folder_requested = bool(email_folder_override or folder_hint)
+
     # folders
     folders = {
-        "root": _safe_folder(params.get("folderRoot") or DEFAULT_FOLDER_ROOT),
-        "emails": _safe_folder(params.get("emailFolder") or DEFAULT_EMAIL_FOLDER),
+        "root": _safe_folder(folder_root_override or DEFAULT_FOLDER_ROOT),
+        "emails": _safe_folder(email_folder_override or DEFAULT_EMAIL_FOLDER),
         "journeys": _safe_folder(params.get("journeyFolder") or DEFAULT_JOURNEY_FOLDER),
         "automations": _safe_folder(params.get("automationFolder") or DEFAULT_AUTOMATION_FOLDER),
         "dataExtensions": _safe_folder(params.get("deFolder") or DEFAULT_DE_FOLDER),
@@ -415,8 +443,36 @@ def generate_blueprint(params: Dict[str, Any]) -> Tuple[dict, List[str]]:
         {"step": 3, "tool": "sfmc-automation-inspector", "description": "Inspect existing automations for audience refresh patterns."},
     ]
     if any(a.get("type") == "email" for a in assets):
-        execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-email-composer", "description": "Draft email HTML/content from copy brief."})
-        execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-email-asset-writer", "description": "Create Email asset(s) in Content Builder (sandbox folders)."})
+        composer_step = len(execution_plan) + 1
+        resolve_step = composer_step + 1
+        writer_step = resolve_step + 1
+        execution_plan.append({
+            "step": composer_step,
+            "tool": "sfmc-email-composer",
+            "description": "Compose email copy/HTML first; request base64 HTML for asset creation.",
+            "outputs": ["subject", "preheader", "htmlContentB64", "emailBlueprint"],
+        })
+        resolve_desc = "Resolve Content Builder folder path to categoryId (requested folder when provided)."
+        if not content_builder_folder_requested:
+            resolve_desc = "Resolve default Content Builder folder path to categoryId."
+        execution_plan.append({
+            "step": resolve_step,
+            "tool": "sfmc-asset-search",
+            "description": resolve_desc,
+            "inputs": {"folderPath": folders["emails"], "createIfMissing": True},
+            "outputs": ["categoryId"],
+        })
+        execution_plan.append({
+            "step": writer_step,
+            "tool": "sfmc-email-asset-writer",
+            "description": "Create draft Email asset(s) using categoryId + subject + preheader + htmlContentB64.",
+            "inputs": {
+                "categoryId": "{{resolveFolder.categoryId}}",
+                "subject": "{{composeEmail.subject}}",
+                "preheader": "{{composeEmail.preheader}}",
+                "htmlContentB64": "{{composeEmail.htmlContentB64}}",
+            },
+        })
     if journeys:
         execution_plan.append({"step": len(execution_plan)+1, "tool": "sfmc-journey-draft-builder", "description": "Create Journey draft aligned to blueprint steps."})
 
