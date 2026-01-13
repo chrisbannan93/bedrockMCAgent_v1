@@ -1,9 +1,9 @@
-# sfmc-email-composer
+# sfmc-email-composer (KB RAG required)
 
 Dodo-only, sandbox-only email drafting tool for Salesforce Marketing Cloud (SFMC).
 
 This tool:
-1) Composes a Dodo-branded email draft (subject, preheader, HTML) using optional Bedrock Knowledge Base retrieval (RAG) + a Bedrock model.
+1) Composes a Dodo-branded email draft (subject, preheader, HTML) using Bedrock Knowledge Base retrieval (RAG required) + a Bedrock model.
 2) Emits a stable `emailBlueprint` payload for downstream tools (e.g., `sfmc-email-asset-writer`).
 
 **Region:** ap-southeast-2 (Sydney)
@@ -59,10 +59,10 @@ Generates:
 
 #### RAG behavior
 One of:
-- Provide `ragContext` (array of strings or `{sourceUri, excerpt}` objects). If valid, it is used **instead of** KB retrieval.
-- Otherwise, if `useKnowledgeBase=true`, the tool retrieves from the KB ID in `EMAIL_STYLE_KB_ID` (or override with `kbId`).
+- Provide `ragContext` (array of strings or `{sourceUri, excerpt}` objects). If valid, it is used **instead of** KB retrieval (KB RAG requirement satisfied).
+- Otherwise, `useKnowledgeBase` must be true and the tool retrieves from the KB ID in `EMAIL_STYLE_KB_ID` (or override with `kbId`).
 
-The tool **rejects** `ragContext` entries that look like non-style metadata (reflection/XML/etc.), and falls back to KB retrieval.
+The tool **rejects** `ragContext` entries that look like non-style metadata (reflection/XML/etc.), and falls back to KB retrieval (required).
 
 #### Output HTML mode
 - If `returnHtmlB64=true`, response `html` will be base64 and `htmlIsB64=true`.
@@ -79,7 +79,7 @@ If `templateHtml` is provided:
 
 ## Environment variables
 
-### Optional (compose/RAG/model)
+### Required (compose/RAG/model)
 - `EMAIL_STYLE_KB_ID` (KB used when `useKnowledgeBase=true` and no `kbId` provided)
 - `BEDROCK_WRITER_MODEL_ID` (default: `anthropic.claude-3-sonnet-20240229-v1:0`)
 
@@ -108,7 +108,7 @@ And a simple runner script:
 
 Typical sequence for “create a draft email asset”:
 1) `sfmc-brief-normalizer` (if brief is messy)
-2) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`)
+2) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`, KB RAG required)
 3) `sfmc-asset-search` `/resolveFolder` → returns `categoryId` (requested or default folder)
 4) `sfmc-email-asset-writer` `/writeEmailAsset` using `categoryId` + subject + preheader + htmlContentB64 (from composer/emailBlueprint)
 
@@ -116,6 +116,6 @@ Typical sequence for “create a draft email asset”:
 
 ## Definition of done
 
-- `/composeEmail` succeeds with and without KB retrieval.
+- `/composeEmail` uses KB retrieval (RAG required).
 - If `SFMC_ALLOWED_ACCOUNT_ID` is set, secrets with mismatched `account_id` are rejected.
 - Tool returns helpful `warnings` instead of failing when RAG retrieval is unavailable.

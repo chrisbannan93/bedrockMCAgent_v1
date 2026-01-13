@@ -3,13 +3,13 @@
   "info": {
     "title": "SFMC Email Composer (Dodo-only)",
     "version": "1.1.0",
-    "description": "Composes Dodo SFMC sandbox email drafts (subject, preheader, HTML) using optional Bedrock KB RAG + model."
+    "description": "Composes Dodo SFMC sandbox email drafts (subject, preheader, HTML) using required Bedrock KB RAG + model."
   },
   "paths": {
     "/composeEmail": {
       "post": {
         "operationId": "composeEmail",
-        "description": "Generate subject, preheader, and HTML for a Dodo email using optional KB RAG or provided ragContext.",
+        "description": "Generate subject, preheader, and HTML for a Dodo email using required KB RAG or provided ragContext.",
         "requestBody": {
           "required": true,
           "content": {
@@ -102,11 +102,11 @@
           "emailGoal": { "type": "string" },
           "audienceSummary": { "type": "string" },
           "requiredLinks": { "type": "array", "items": { "type": "string" } },
-          "useKnowledgeBase": { "type": "boolean", "description": "If true, enables KB retrieval inside the Lambda. Prefer agent-native KB attachment when possible.", "default": false },
+          "useKnowledgeBase": { "type": "boolean", "description": "If true, enables KB retrieval inside the Lambda (required when ragContext not provided).", "default": true },
           "kbId": { "type": "string", "description": "Knowledge Base ID override." },
           "ragContext": {
             "type": "array",
-            "description": "Optional pre-retrieved style snippets. If provided, used instead of KB retrieve. Do not include reflection/metadata/XML.",
+            "description": "Optional pre-retrieved style snippets. If provided, used instead of KB retrieve (must be real style snippets). Do not include reflection/metadata/XML.",
             "items": { "oneOf": [{ "type": "string" }, { "$ref": "#/components/schemas/RagContextItem" }] }
           },
           "ragResults": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5 },
