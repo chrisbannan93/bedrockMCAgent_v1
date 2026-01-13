@@ -30,6 +30,9 @@ Bedrock Agent
 4. `sfmc-email-asset-writer` → create a draft Content Builder asset using `categoryId` + subject + preheader + base64 HTML
 
 **Orchestration:** The **Bedrock Agent** chains calls. Lambdas must **not** call other Lambdas.
+Each tool Lambda is expected to be **standalone** (self-contained in its own `lambda/` folder). If a tool
+uses shared utilities, include them in the Lambda package (for example, by vendoring or bundling the
+shared code into the deployment artifact).
 
 ---
 
@@ -79,7 +82,8 @@ See `docs/CODEX_PLAYBOOK.md` for conventions.
 
 ### 1) Package a tool Lambda
 
-Each tool is standalone. Package the folder’s `lambda/` and deploy it as a Lambda function. Example:
+Each tool is standalone. Package the folder’s `lambda/` (and any bundled shared code) and deploy it as
+a Lambda function. Example:
 
 ```
 cd tools/sfmc-email-composer

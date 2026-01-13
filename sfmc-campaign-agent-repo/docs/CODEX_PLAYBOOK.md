@@ -10,3 +10,5 @@ When improving a tool:
    - No live sends / activation / publish
    - Never echo SFMC IDs back in chat outputs
 5) Prefer small, safe changes; avoid large refactors unless necessary.
+6) Keep each Lambda tool self-contained in its own `lambda/` folder. If you need shared helpers,
+   bundle them into the Lambda package; do not rely on cross-Lambda calls.
