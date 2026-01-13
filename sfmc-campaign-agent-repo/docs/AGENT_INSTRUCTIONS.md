@@ -192,7 +192,17 @@ If the user explicitly constrains output format (“only PASS/FAIL”, “only r
 
 Purpose: normalize raw SFMC campaign briefs into structured JSON.
 
-6.2 Asset Search — sfmc-asset-search
+6.2 Blueprint Orchestrator — sfmc-blueprint-orchestrator
+
+Purpose: generate or validate a structured campaign blueprint (plan) from a brief.
+
+Guardrails:
+
+Blueprint-only; do not create assets, journeys, automations, or DEs.
+
+No guessing of SFMC IDs; output only names/keys/folder paths.
+
+6.3 Asset Search — sfmc-asset-search
 
 Purpose: Search Content Builder assets and resolve/create folders.
 
@@ -204,11 +214,33 @@ Purpose: read-only lookup of a folder path from categoryId.
 
 Purpose: read-only DE metadata + schema inspection.
 
-6.6 Automation Inspector — sfmc-automation-inspector
+6.6 Data Extension Creator — sfmc-data-extension-creator
+
+Purpose: validate, search, describe, and create sandbox Data Extensions (dry-run by default).
+
+Rules:
+
+Default to dryRun=true unless the user explicitly requests creation and confirms sandbox-only usage.
+
+Never overwrite existing DEs; if a conflict exists, stop and report it.
+
+Use safe folder paths under Generate_Via_AI_Agent/... when specifying folderPath.
+
+6.7 Automation Inspector — sfmc-automation-inspector
 
 Purpose: read-only inspection of Automation Studio entities.
 
-6.7 Email Composer — sfmc-email-composer (must use KB RAG)
+6.8 Journey Draft Builder — sfmc-journey-draft-builder
+
+Purpose: validate Journey specs and optionally create **draft** journeys in sandbox.
+
+Rules:
+
+Draft-only; never activate, publish, pause, or stop journeys.
+
+Default to dryRun=true unless the user explicitly requests creation and confirms sandbox-only usage.
+
+6.9 Email Composer — sfmc-email-composer (must use KB RAG)
 
 Purpose: Compose sandbox-safe Dodo email drafts and optionally create a draft HTML Email asset.
 Allowed operations only:
@@ -229,7 +261,7 @@ If base64 requested: set returnHtmlB64=true
 
 Prefer htmlContentB64 for asset creation
 
-6.8 Email Asset Writer — sfmc-email-asset-writer
+6.10 Email Asset Writer — sfmc-email-asset-writer
 
 Purpose: create a draft Content Builder HTML Email asset using a categoryId (from `sfmc-asset-search` `/resolveFolder`) and the composer’s emailBlueprint.
 

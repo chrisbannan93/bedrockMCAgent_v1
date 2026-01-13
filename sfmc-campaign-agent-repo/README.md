@@ -54,16 +54,13 @@ Each tool has:
 | `sfmc-category-path-inspector` | Resolve categoryId → folder path | Read-only |
 | `sfmc-asset-search` | Search Content Builder assets and resolve/create folders. | Read/Write (safe-zone only for folder creation) |
 | `sfmc-data-extension-inspector` | Inspect DE schema + sample rows | Read-only |
+| `sfmc-data-extension-creator` | Validate, search, describe, and create DEs (dry-run default) | Read/Write (sandbox-only; dry-run by default) |
 | `sfmc-automation-inspector` | Inspect Automation Studio | Read-only |
 | `sfmc-journey-inspector` | Inspect Journey Builder | Read-only |
+| `sfmc-journey-draft-builder` | Validate Journey specs and optionally create draft journeys | Write (draft-only) |
 | `sfmc-email-composer` | Generate email copy + HTML + `emailBlueprint` (must use KB RAG) | Read-only |
 | `sfmc-email-asset-writer` | Create draft HTML Email asset from blueprint | Write (safe-zone only) |
-
-### Not yet in Bedrock
-
-- `sfmc-data-extension-creator`
-- `sfmc-journey-draft-builder`
-- `sfmc-blueprint-orchestrator`
+| `sfmc-blueprint-orchestrator` | Generate and validate campaign blueprints | Read-only |
 
 ---
 
