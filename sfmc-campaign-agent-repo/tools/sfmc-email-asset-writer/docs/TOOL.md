@@ -60,9 +60,9 @@ Creates a **draft** HTML Email asset in Content Builder.
 
 Typical sequence for “create a draft email asset”:
 1) `sfmc-brief-normalizer` (if brief is messy)
-2) `sfmc-asset-search` `/resolveFolder` → returns `categoryId`
-3) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`)
-4) `sfmc-email-asset-writer` `/writeEmailAsset` using `emailBlueprint` + `categoryId`
+2) `sfmc-email-composer` `/composeEmail` (prefer `returnHtmlB64=true`)
+3) `sfmc-asset-search` `/resolveFolder` → returns `categoryId` (requested or default folder)
+4) `sfmc-email-asset-writer` `/writeEmailAsset` using `categoryId` + subject + preheader + htmlContentB64 (from composer/emailBlueprint)
 
 ---
 
