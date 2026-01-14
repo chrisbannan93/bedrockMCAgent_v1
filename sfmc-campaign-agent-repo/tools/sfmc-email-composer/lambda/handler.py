@@ -446,16 +446,24 @@ def _sfmc_request(method: str, url: str, access_token: str, json_body: Optional[
 # -----------------------------
 # RAG retrieve (KB)
 # -----------------------------
-def _retrieve_style(kb_id: str, query_text: str, num_results: int) -> Tuple[List[dict], List[str]]:
+def _retrieve_style(
+    kb_id: str,
+    query_text: str,
+    num_results: int,
+    metadata_filter: Optional[dict],
+) -> Tuple[List[dict], List[str]]:
     warnings: List[str] = []
     if not kb_id:
         return [], ["KB RAG required but no kbId provided."]
 
     try:
+        vector_config: dict = {"numberOfResults": num_results}
+        if metadata_filter:
+            vector_config["filter"] = metadata_filter
         resp = bedrock_agent_rt.retrieve(
             knowledgeBaseId=kb_id,
             retrievalQuery={"text": query_text},
-            retrievalConfiguration={"vectorSearchConfiguration": {"numberOfResults": num_results}},
+            retrievalConfiguration={"vectorSearchConfiguration": vector_config},
         )
         results = resp.get("retrievalResults") or []
         sources: List[dict] = []
@@ -464,6 +472,22 @@ def _retrieve_style(kb_id: str, query_text: str, num_results: int) -> Tuple[List
             loc = r.get("location") or {}
             s3loc = (loc.get("s3Location") or {}).get("uri")
             score = r.get("score")
+            metadata = r.get("metadata") or r.get("metadataAttributes") or {}
+            if metadata:
+                try:
+                    metadata_json = json.dumps(metadata, ensure_ascii=False)
+                    if len(metadata_json.encode("utf-8")) > 10 * 1024:
+                        warnings.append("RAG metadata sidecar exceeds 10KB limit; consider trimming in KB source.")
+                except Exception:
+                    warnings.append("RAG metadata could not be serialized for size validation.")
+                for key, value in metadata.items():
+                    if isinstance(value, str) and value != value.lower():
+                        warnings.append(
+                            f"RAG metadata {key} contains uppercase; KB sidecars must be lowercase."
+                        )
+            if s3loc and "/kb/" not in s3loc:
+                warnings.append(f"RAG source outside kb/ ignored: {s3loc}")
+                continue
             sources.append(
                 {"sourceUri": s3loc or "", "score": float(score) if score is not None else 0.0, "excerpt": content[:600]}
             )
@@ -472,6 +496,79 @@ def _retrieve_style(kb_id: str, query_text: str, num_results: int) -> Tuple[List
         warnings.append("RAG retrieve failed; KB RAG is required.")
         logger.exception("RAG retrieve error")
         return [], warnings
+
+
+_KB_METADATA_FIELDS = {
+    "brand",
+    "channel",
+    "doc_type",
+    "campaign_type",
+    "product",
+    "module_type",
+    "format",
+}
+
+
+def _normalize_kb_filter_value(value: str, field: str, warnings: List[str]) -> Optional[str]:
+    if not isinstance(value, str):
+        warnings.append(f"kbFilters.{field} must be a string or list of strings; skipping invalid entry.")
+        return None
+    trimmed = value.strip()
+    if not trimmed:
+        warnings.append(f"kbFilters.{field} was empty; skipping.")
+        return None
+    lower = trimmed.lower()
+    if trimmed != lower:
+        warnings.append(f"kbFilters.{field} contained uppercase; normalized to lowercase.")
+    return lower
+
+
+def _build_kb_metadata_filter(req: dict) -> Tuple[Optional[dict], List[str]]:
+    warnings: List[str] = []
+    raw_filters = req.get("kbFilters") or req.get("ragFilters")
+    if not raw_filters:
+        raw_filters = {}
+
+    if raw_filters and not isinstance(raw_filters, dict):
+        warnings.append("kbFilters must be an object; ignoring.")
+        return None, warnings
+
+    filters: List[dict] = []
+
+    brand_value = raw_filters.get("brand") if isinstance(raw_filters, dict) else None
+    if brand_value and isinstance(brand_value, str) and brand_value.strip().lower() != "dodo":
+        warnings.append("kbFilters.brand must be 'dodo'; overriding to 'dodo'.")
+    raw_filters = dict(raw_filters or {})
+    raw_filters["brand"] = "dodo"
+    unknown_keys = set(raw_filters) - _KB_METADATA_FIELDS
+    if unknown_keys:
+        warnings.append(f"kbFilters contained unsupported keys: {', '.join(sorted(unknown_keys))}.")
+
+    for field in _KB_METADATA_FIELDS:
+        if field not in raw_filters:
+            continue
+        raw_val = raw_filters.get(field)
+        if raw_val is None:
+            continue
+        values = raw_val if isinstance(raw_val, list) else [raw_val]
+        clauses: List[dict] = []
+        for val in values:
+            normalized = _normalize_kb_filter_value(val, field, warnings)
+            if normalized is None:
+                continue
+            clauses.append({"equals": {"key": f"metadataAttributes.{field}", "value": normalized}})
+        if not clauses:
+            continue
+        if len(clauses) == 1:
+            filters.append(clauses[0])
+        else:
+            filters.append({"orAll": clauses})
+
+    if not filters:
+        return None, warnings
+    if len(filters) == 1:
+        return filters[0], warnings
+    return {"andAll": filters}, warnings
 
 
 def _rag_sources_from_ragcontext(rag_context: Any) -> List[dict]:
@@ -836,6 +933,8 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
 
     sanitized_rc, rc_warnings = _sanitize_rag_context(req)
     rag_warnings.extend(rc_warnings)
+    kb_filter, filter_warnings = _build_kb_metadata_filter(req)
+    rag_warnings.extend(filter_warnings)
 
     if sanitized_rc:
         rag_sources = _rag_sources_from_ragcontext(sanitized_rc)
@@ -843,7 +942,7 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
         if not resolved_kb_id:
             return 400, {"error": "KB RAG required. Provide kbId or enable useKnowledgeBase."}
         query_text = f"Dodo SFMC email style guidance for: {brief}"
-        rag_sources, kb_warnings = _retrieve_style(resolved_kb_id, query_text, rag_results)
+        rag_sources, kb_warnings = _retrieve_style(resolved_kb_id, query_text, rag_results, kb_filter)
         rag_warnings.extend(kb_warnings)
         if not rag_sources and any("RAG retrieve failed" in w for w in kb_warnings):
             return 502, {"error": "KB RAG retrieval failed.", "warnings": rag_warnings}
