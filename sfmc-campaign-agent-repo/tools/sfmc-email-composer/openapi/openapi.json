@@ -104,6 +104,9 @@
           "requiredLinks": { "type": "array", "items": { "type": "string" } },
           "useKnowledgeBase": { "type": "boolean", "description": "If true, enables KB retrieval inside the Lambda (required when ragContext not provided).", "default": true },
           "kbId": { "type": "string", "description": "Knowledge Base ID override." },
+          "kbFilters": {
+            "$ref": "#/components/schemas/KbFilters"
+          },
           "ragContext": {
             "type": "array",
             "description": "Optional pre-retrieved style snippets. If provided, used instead of KB retrieve (must be real style snippets). Do not include reflection/metadata/XML.",
@@ -175,6 +178,24 @@
           "error": { "type": "string" },
           "errorType": { "type": "string" },
           "message": { "type": "string" }
+        }
+      }
+      ,
+      "KbFilters": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Metadata filters applied to KB retrieval. Values must be lowercase. brand is enforced to dodo.",
+        "properties": {
+          "brand": {
+            "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
+            "default": "dodo"
+          },
+          "channel": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "doc_type": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "campaign_type": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "product": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "module_type": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+          "format": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] }
         }
       }
     }

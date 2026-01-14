@@ -56,6 +56,7 @@ Generates:
 - `templateHtml` (string, optional) — full HTML container with a `{{BODY_HTML}}` placeholder or a Content Builder slot to inject into.
 - `templateSlotKey` (string, optional) — `data-key` value for a `<div data-type="slot" ...>` placeholder if `{{BODY_HTML}}` is not present.
 - `templateSlotLabel` (string, optional) — `data-label` value for a `<div data-type="slot" ...>` placeholder if `{{BODY_HTML}}` is not present.
+- `kbFilters` (object, optional) — metadata filters for KB retrieval (values must be lowercase, brand is enforced to `dodo`).
 
 #### RAG behavior
 One of:
@@ -63,6 +64,8 @@ One of:
 - Otherwise, `useKnowledgeBase` must be true and the tool retrieves from the KB ID in `EMAIL_STYLE_KB_ID` (or override with `kbId`).
 
 The tool **rejects** `ragContext` entries that look like non-style metadata (reflection/XML/etc.), and falls back to KB retrieval (required).
+
+KB retrieval is scoped to `kb/` sources only and can be filtered using metadata sidecar attributes such as `doc_type`, `campaign_type`, and `module_type` via `kbFilters`.
 
 #### Output HTML mode
 - If `returnHtmlB64=true`, response `html` will be base64 and `htmlIsB64=true`.
