@@ -736,6 +736,15 @@ def _build_rag_query(req: dict, brief: str) -> str:
     if brief:
         parts.append(brief)
 
+    kb_scopes: List[str] = ["kb/rules"]
+    if req.get("templateHtml") or req.get("requiredBlocks"):
+        kb_scopes.extend(["kb/modules/html_snippets", "kb/modules/docs"])
+    if brief:
+        kb_scopes.append("kb/examples/copy_extract")
+
+    if kb_scopes:
+        parts.append("kb_scopes:" + ",".join(sorted(set(kb_scopes))))
+
     normalized_brief = req.get("normalizedBrief")
     if isinstance(normalized_brief, dict):
         for key in ("campaignType", "campaign_type", "product", "moduleType", "module_type", "docType", "doc_type"):
