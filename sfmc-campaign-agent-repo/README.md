@@ -167,6 +167,14 @@ Minimum permissions (adjust per tool):
 
 ---
 
+## KB content access (for review)
+
+This repo does **not** include the KB content itself. The email composer retrieves KB content at
+runtime via `EMAIL_STYLE_KB_ID`. If you need to review KB content locally, see
+`docs/KB_IMPORT.md` for import options and network limitations in this environment.
+
+---
+
 ## Repo layout
 
 ```
