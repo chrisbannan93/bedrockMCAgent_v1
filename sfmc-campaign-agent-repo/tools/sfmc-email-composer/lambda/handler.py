@@ -731,6 +731,46 @@ RAG_STYLE_GUIDANCE (may be empty):
 """.strip()
 
 
+def _build_rag_query(req: dict, brief: str) -> str:
+    parts: List[str] = []
+    if brief:
+        parts.append(brief)
+
+    normalized_brief = req.get("normalizedBrief")
+    if isinstance(normalized_brief, dict):
+        for key in ("campaignType", "campaign_type", "product", "moduleType", "module_type", "docType", "doc_type"):
+            value = normalized_brief.get(key)
+            if isinstance(value, str) and value.strip():
+                parts.append(f"{key}:{value.strip()}")
+
+    tone = (req.get("tone") or "").strip()
+    if tone:
+        parts.append(f"tone:{tone}")
+
+    email_goal = (req.get("emailGoal") or "").strip()
+    if email_goal:
+        parts.append(f"goal:{email_goal}")
+
+    audience = (req.get("audienceSummary") or "").strip()
+    if audience:
+        parts.append(f"audience:{audience}")
+
+    required_blocks = req.get("requiredBlocks") or []
+    if isinstance(required_blocks, list) and required_blocks:
+        parts.append("requiredBlocks:" + ",".join(str(b) for b in required_blocks if str(b).strip()))
+
+    cta_text = (req.get("ctaText") or req.get("cta") or "").strip()
+    if cta_text:
+        parts.append(f"ctaText:{cta_text}")
+
+    cta_url = (req.get("ctaUrl") or "").strip()
+    if cta_url:
+        parts.append(f"ctaUrl:{cta_url}")
+
+    if not parts:
+        return "Dodo SFMC email style guidance."
+    return "Dodo SFMC email style guidance for: " + " | ".join(parts)
+
 def _fallback_extract_model_fields(text: str) -> Optional[dict]:
     """
     Salvage subject/preheader/html from JSON-ish output even if json.loads fails.
@@ -913,6 +953,8 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
         return 400, {"error": "Provide brief OR normalizedBrief."}
 
     use_kb = req.get("useKnowledgeBase")
+    if use_kb is None:
+        use_kb = True
     template_html = (req.get("templateHtml") or "").strip()
     template_slot_key = (req.get("templateSlotKey") or "").strip()
     template_slot_label = (req.get("templateSlotLabel") or "").strip()
@@ -941,11 +983,13 @@ def _op_compose_email(req: dict) -> Tuple[int, dict]:
     else:
         if not resolved_kb_id:
             return 400, {"error": "KB RAG required. Provide kbId or enable useKnowledgeBase."}
-        query_text = f"Dodo SFMC email style guidance for: {brief}"
+        query_text = _build_rag_query(req, brief)
         rag_sources, kb_warnings = _retrieve_style(resolved_kb_id, query_text, rag_results, kb_filter)
         rag_warnings.extend(kb_warnings)
         if not rag_sources and any("RAG retrieve failed" in w for w in kb_warnings):
             return 502, {"error": "KB RAG retrieval failed.", "warnings": rag_warnings}
+        if not rag_sources:
+            rag_warnings.append("KB retrieval returned no style snippets; output may be less on-brand.")
 
     model_id = (req.get("modelId") or "").strip() or os.getenv(
         "BEDROCK_WRITER_MODEL_ID",
