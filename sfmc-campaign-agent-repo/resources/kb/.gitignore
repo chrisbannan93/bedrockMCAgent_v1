@@ -1,0 +1,22 @@
+﻿# Raw inputs (keep private)
+intake/
+
+# Optional: keep raw HTML out of git (often noisy / may contain PII)
+kb/examples/raw_html/
+
+# Docs (if you don't want to commit these formats)
+*.doc
+*.docx
+*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
