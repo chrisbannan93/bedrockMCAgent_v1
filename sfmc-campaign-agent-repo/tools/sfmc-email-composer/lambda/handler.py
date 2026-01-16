@@ -740,7 +740,7 @@ def _build_rag_query(req: dict, brief: str) -> str:
     if req.get("templateHtml") or req.get("requiredBlocks"):
         kb_scopes.extend(["kb/modules/html_snippets", "kb/modules/docs"])
     if brief:
-        kb_scopes.append("kb/examples/copy_extract")
+        kb_scopes.extend(["kb/examples/copy_extract", "kb/examples/edm_template"])
 
     if kb_scopes:
         parts.append("kb_scopes:" + ",".join(sorted(set(kb_scopes))))

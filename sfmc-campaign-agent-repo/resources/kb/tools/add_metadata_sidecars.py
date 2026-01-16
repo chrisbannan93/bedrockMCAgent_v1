@@ -9,12 +9,14 @@ Config format (JSON):
     {
       "path": "kb/rules/00_dodo_voice_principles.md",
       "metadata": {
-        "brand": "dodo",
-        "channel": "edm",
-        "doc_type": "rule",
-        "campaign_type": "other",
-        "product": "other",
-        "format": "markdown"
+        "metadataAttributes": {
+          "brand": "dodo",
+          "channel": "edm",
+          "doc_type": "rule",
+          "campaign_type": "other",
+          "product": "other",
+          "format": "markdown"
+        }
       }
     }
   ]
@@ -56,6 +58,9 @@ def main() -> int:
         if not target_path.exists():
             print(f"Skipping missing file: {target_path}", file=sys.stderr)
             continue
+
+        if "metadataAttributes" not in metadata:
+            metadata = {"metadataAttributes": metadata}
 
         sidecar_path = target_path.with_suffix(target_path.suffix + ".metadata.json")
         content = json.dumps(metadata, indent=2, sort_keys=True)
